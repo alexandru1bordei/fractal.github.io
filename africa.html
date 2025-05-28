@@ -2,106 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>African Capitals Quiz</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: auto;
-      padding: 30px;
+      margin: 0;
+      padding: 20px;
       text-align: center;
-      position: relative;
+      background: #f9f9f9;
     }
-    input {
-      padding: 10px;
-      font-size: 16px;
-      width: 80%;
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-size: 1.8em;
+    }
+
+    input, button {
+      font-size: 1.2em;
+      padding: 12px;
       margin-top: 10px;
+      width: 90%;
+      box-sizing: border-box;
     }
+
+    button {
+      margin-top: 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
     .feedback {
       margin-top: 15px;
-      font-size: 18px;
+      font-size: 1.2em;
       font-weight: bold;
     }
+
     #liveScore {
-      position: absolute;
+      position: fixed;
       top: 10px;
-      right: 20px;
-      font-size: 18px;
+      right: 15px;
+      font-size: 1em;
       font-weight: bold;
+      background-color: #ffffffcc;
+      padding: 6px 12px;
+      border-radius: 6px;
     }
+
     .score {
       margin-top: 25px;
-      font-size: 20px;
+      font-size: 1.2em;
       font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      input, button {
+        font-size: 1.3em;
+        width: 100%;
+      }
+
+      h2 {
+        font-size: 1.5em;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      #liveScore {
+        font-size: 1em;
+      }
     }
   </style>
 </head>
 <body>
   <div id="liveScore">Score: 0 / 0</div>
-  <h2>African Capitals Quiz</h2>
-  <div id="quiz">
-    <div id="countryName"></div>
-    <input type="text" id="answerInput" placeholder="Type the capital..." autocomplete="off" />
-    <div class="feedback" id="feedback"></div>
+  <div class="container">
+    <h2>African Capitals Quiz</h2>
+    <div id="quiz">
+      <div id="countryName"></div>
+      <input type="text" id="answerInput" placeholder="Type the capital..." autocomplete="off" />
+      <button id="submitBtn">Submit</button>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="score" id="scoreArea"></div>
   </div>
-  <div class="score" id="scoreArea"></div>
 
   <script>
     let countries = [
-      ["Algeria", "algiers"],
-      ["Angola", "luanda"],
-      ["Benin", "porto-novo"],
-      ["Botswana", "gaborone"],
-      ["Burkina Faso", "ouagadougou"],
-      ["Burundi", "bujumbura"],
-      ["Cabo Verde", "praia"],
-      ["Cameroon", "yaounde"],
-      ["Central African Republic", "bangui"],
-      ["Chad", "n'djamena"],
-      ["Comoros", "moroni"],
-      ["Republic of the Congo", "brazzaville"],
-      ["Democratic Republic of the Congo", "kinshasa"],
-      ["Djibouti", "djibouti"],
-      ["Egypt", "cairo"],
-      ["Equatorial Guinea", "malabo"],
-      ["Eritrea", "asmara"],
-      ["Eswatini", "mbabane"],
-      ["Ethiopia", "addis ababa"],
-      ["Gabon", "libreville"],
-      ["Gambia", "banjul"],
-      ["Ghana", "accra"],
-      ["Guinea", "conakry"],
-      ["Guinea-Bissau", "bissau"],
-      ["Ivory Coast", "yamoussoukro"],
-      ["Kenya", "nairobi"],
-      ["Lesotho", "maseru"],
-      ["Liberia", "monrovia"],
-      ["Libya", "tripoli"],
-      ["Madagascar", "antananarivo"],
-      ["Malawi", "lilongwe"],
-      ["Mali", "bamako"],
-      ["Mauritania", "nouakchott"],
-      ["Mauritius", "port louis"],
-      ["Morocco", "rabat"],
-      ["Mozambique", "maputo"],
-      ["Namibia", "windhoek"],
-      ["Niger", "niamey"],
-      ["Nigeria", "abuja"],
-      ["Rwanda", "kigali"],
-      ["São Tomé and Príncipe", "são tomé"],
-      ["Senegal", "dakar"],
-      ["Seychelles", "victoria"],
-      ["Sierra Leone", "freetown"],
-      ["Somalia", "mogadishu"],
-      ["South Africa", "capetown"],
-      ["South Sudan", "juba"],
-      ["Sudan", "khartoum"],
-      ["Tanzania", "dodoma"],
-      ["Togo", "lome"],
-      ["Tunisia", "tunis"],
-      ["Uganda", "kampala"],
-      ["Zambia", "lusaka"],
+      ["Algeria", "algiers"], ["Angola", "luanda"], ["Benin", "porto-novo"],
+      ["Botswana", "gaborone"], ["Burkina Faso", "ouagadougou"], ["Burundi", "gitega"],
+      ["Cabo Verde", "praia"], ["Cameroon", "yaounde"], ["Central African Republic", "bangui"],
+      ["Chad", "n'djamena"], ["Comoros", "moroni"], ["Republic of the Congo", "brazzaville"],
+      ["Democratic Republic of the Congo", "kinshasa"], ["Djibouti", "djibouti"],
+      ["Egypt", "cairo"], ["Equatorial Guinea", "malabo"], ["Eritrea", "asmara"],
+      ["Eswatini", "mbabane"], ["Ethiopia", "addis ababa"], ["Gabon", "libreville"],
+      ["Gambia", "banjul"], ["Ghana", "accra"], ["Guinea", "conakry"],
+      ["Guinea-Bissau", "bissau"], ["Ivory Coast", "yamoussoukro"], ["Kenya", "nairobi"],
+      ["Lesotho", "maseru"], ["Liberia", "monrovia"], ["Libya", "tripoli"],
+      ["Madagascar", "antananarivo"], ["Malawi", "lilongwe"], ["Mali", "bamako"],
+      ["Mauritania", "nouakchott"], ["Mauritius", "port louis"], ["Morocco", "rabat"],
+      ["Mozambique", "maputo"], ["Namibia", "windhoek"], ["Niger", "niamey"],
+      ["Nigeria", "abuja"], ["Rwanda", "kigali"], ["São Tomé and Príncipe", "são tomé"],
+      ["Senegal", "dakar"], ["Seychelles", "victoria"], ["Sierra Leone", "freetown"],
+      ["Somalia", "mogadishu"], ["South Africa", "pretoria"], ["South Sudan", "juba"],
+      ["Sudan", "khartoum"], ["Tanzania", "dodoma"], ["Togo", "lome"],
+      ["Tunisia", "tunis"], ["Uganda", "kampala"], ["Zambia", "lusaka"],
       ["Zimbabwe", "harare"]
     ];
 
@@ -122,6 +143,7 @@
     const feedbackDiv = document.getElementById("feedback");
     const scoreArea = document.getElementById("scoreArea");
     const liveScore = document.getElementById("liveScore");
+    const submitBtn = document.getElementById("submitBtn");
 
     function normalize(text) {
       return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -148,17 +170,14 @@
 
       if (userAnswer === correctAnswer) {
         score++;
+        current++;
+        updateLiveScore();
+        showCountry();
       } else {
         feedbackDiv.textContent = `❌ Incorrect. The capital is ${countries[current][1]}.`;
         feedbackDiv.style.color = "red";
-      }
-
-      current++;
-      updateLiveScore();
-
-      if (userAnswer === correctAnswer) {
-        showCountry();
-      } else {
+        current++;
+        updateLiveScore();
         setTimeout(showCountry, 1000);
       }
     }
@@ -166,6 +185,7 @@
     function quizFinished() {
       countryDiv.textContent = "Quiz completed!";
       answerInput.style.display = "none";
+      submitBtn.style.display = "none";
       feedbackDiv.style.display = "none";
       scoreArea.textContent = `Final score: ${score} / ${countries.length}`;
     }
@@ -176,6 +196,8 @@
         submitAnswer();
       }
     });
+
+    submitBtn.addEventListener("click", submitAnswer);
 
     updateLiveScore();
     showCountry();
