@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>African Capitals Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 80%;
+      margin-top: 10px;
+    }
+    .feedback {
+      margin-top: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    #liveScore {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .score {
+      margin-top: 25px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="liveScore">Score: 0 / 0</div>
+  <h2>African Capitals Quiz</h2>
+  <div id="quiz">
+    <div id="countryName"></div>
+    <input type="text" id="answerInput" placeholder="Type the capital..." autocomplete="off" />
+    <div class="feedback" id="feedback"></div>
+  </div>
+  <div class="score" id="scoreArea"></div>
+
+  <script>
+    let countries = [
+      ["Algeria", "algiers"],
+      ["Angola", "luanda"],
+      ["Benin", "porto-novo"],
+      ["Botswana", "gaborone"],
+      ["Burkina Faso", "ouagadougou"],
+      ["Burundi", "bujumbura"],
+      ["Cabo Verde", "praia"],
+      ["Cameroon", "yaounde"],
+      ["Central African Republic", "bangui"],
+      ["Chad", "n'djamena"],
+      ["Comoros", "moroni"],
+      ["Republic of the Congo", "brazzaville"],
+      ["Democratic Republic of the Congo", "kinshasa"],
+      ["Djibouti", "djibouti"],
+      ["Egypt", "cairo"],
+      ["Equatorial Guinea", "malabo"],
+      ["Eritrea", "asmara"],
+      ["Eswatini", "mbabane"],
+      ["Ethiopia", "addis ababa"],
+      ["Gabon", "libreville"],
+      ["Gambia", "banjul"],
+      ["Ghana", "accra"],
+      ["Guinea", "conakry"],
+      ["Guinea-Bissau", "bissau"],
+      ["Ivory Coast", "yamoussoukro"],
+      ["Kenya", "nairobi"],
+      ["Lesotho", "maseru"],
+      ["Liberia", "monrovia"],
+      ["Libya", "tripoli"],
+      ["Madagascar", "antananarivo"],
+      ["Malawi", "lilongwe"],
+      ["Mali", "bamako"],
+      ["Mauritania", "nouakchott"],
+      ["Mauritius", "port louis"],
+      ["Morocco", "rabat"],
+      ["Mozambique", "maputo"],
+      ["Namibia", "windhoek"],
+      ["Niger", "niamey"],
+      ["Nigeria", "abuja"],
+      ["Rwanda", "kigali"],
+      ["São Tomé and Príncipe", "são tomé"],
+      ["Senegal", "dakar"],
+      ["Seychelles", "victoria"],
+      ["Sierra Leone", "freetown"],
+      ["Somalia", "mogadishu"],
+      ["South Africa", "capetown"],
+      ["South Sudan", "juba"],
+      ["Sudan", "khartoum"],
+      ["Tanzania", "dodoma"],
+      ["Togo", "lome"],
+      ["Tunisia", "tunis"],
+      ["Uganda", "kampala"],
+      ["Zambia", "lusaka"],
+      ["Zimbabwe", "harare"]
+    ];
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffleArray(countries);
+
+    let current = 0;
+    let score = 0;
+
+    const countryDiv = document.getElementById("countryName");
+    const answerInput = document.getElementById("answerInput");
+    const feedbackDiv = document.getElementById("feedback");
+    const scoreArea = document.getElementById("scoreArea");
+    const liveScore = document.getElementById("liveScore");
+
+    function normalize(text) {
+      return text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function updateLiveScore() {
+      liveScore.textContent = `Score: ${score} / ${current}`;
+    }
+
+    function showCountry() {
+      if (current < countries.length) {
+        countryDiv.textContent = `What is the capital of ${countries[current][0]}?`;
+        answerInput.value = "";
+        feedbackDiv.textContent = "";
+        answerInput.focus();
+      } else {
+        quizFinished();
+      }
+    }
+
+    function submitAnswer() {
+      const userAnswer = normalize(answerInput.value);
+      const correctAnswer = normalize(countries[current][1]);
+
+      if (userAnswer === correctAnswer) {
+        score++;
+      } else {
+        feedbackDiv.textContent = `❌ Incorrect. The capital is ${countries[current][1]}.`;
+        feedbackDiv.style.color = "red";
+      }
+
+      current++;
+      updateLiveScore();
+
+      if (userAnswer === correctAnswer) {
+        showCountry();
+      } else {
+        setTimeout(showCountry, 1000);
+      }
+    }
+
+    function quizFinished() {
+      countryDiv.textContent = "Quiz completed!";
+      answerInput.style.display = "none";
+      feedbackDiv.style.display = "none";
+      scoreArea.textContent = `Final score: ${score} / ${countries.length}`;
+    }
+
+    answerInput.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitAnswer();
+      }
+    });
+
+    updateLiveScore();
+    showCountry();
+  </script>
+</body>
+</html>
