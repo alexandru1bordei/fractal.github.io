@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Match Engine — Premier League 2026/27</title>
+
+  <!-- Tailwind is used by the original JSX class names. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Resolve the original React imports in the browser. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+      "recharts": "https://esm.sh/recharts@2.15.4?external=react",
+      "lucide-react": "https://esm.sh/lucide-react@0.468.0?external=react"
+    }
+  }
+  </script>
+
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body, #root {
+      margin: 0;
+      min-height: 100%;
+      background: #0b0d0c;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    import React, { useState, useMemo, useEffect } from "react";
+    import { createRoot } from "react-dom/client";
+    import {
+      RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
+      BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip
+    } from "recharts";
+    import {
+      Play, Dices, ChevronDown, ChevronUp, Save, RotateCcw, Users, Swords,
+      Wand2, Trophy, Table2, History, Wallet, ShoppingCart, X, Check
+    } from "lucide-react";
+
+/* ============================================================
+   DATA — Premier League 2026/27 key players (FC26 ratings)
+   ============================================================ */
+const BASE_PLAYERS = [{"id":1,"name":"David Raya","club":"Arsenal","country":"Spain","rating":87,"pos":"GK","positions":["GK"],"cat":"DEF","value":52.2},{"id":2,"name":"Kepa Arrizabalaga","club":"Arsenal","country":"Spain","rating":79,"pos":"GK","positions":["GK"],"cat":"DEF","value":10.0},{"id":3,"name":"Gabriel Magalhaes","club":"Arsenal","country":"Brazil","rating":89,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":109.3},{"id":4,"name":"William Saliba","club":"Arsenal","country":"France","rating":88,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":88.9},{"id":5,"name":"Jurrien Timber","club":"Arsenal","country":"Netherlands","rating":84,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":38.8},{"id":6,"name":"Ben White","club":"Arsenal","country":"England","rating":82,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":25.7},{"id":7,"name":"Piero Hincapie","club":"Arsenal","country":"Ecuador","rating":83,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":31.6},{"id":8,"name":"Riccardo Calafiori","club":"Arsenal","country":"Italy","rating":82,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":25.7},{"id":9,"name":"Myles Lewis-Skelly","club":"Arsenal","country":"England","rating":78,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":11.2},{"id":10,"name":"Cristhian Mosquera","club":"Arsenal","country":"Spain","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":11,"name":"Declan Rice","club":"Arsenal","country":"England","rating":88,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":98.7},{"id":12,"name":"Martin Odegaard","club":"Arsenal","country":"Norway","rating":86,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":65.3},{"id":13,"name":"Mikel Merino","club":"Arsenal","country":"Spain","rating":83,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":35.1},{"id":14,"name":"Christian Norgaard","club":"Arsenal","country":"Denmark","rating":80,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":18.8},{"id":15,"name":"Eberechi Eze","club":"Arsenal","country":"England","rating":84,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":43.1},{"id":16,"name":"Viktor Gyokeres","club":"Arsenal","country":"Sweden","rating":86,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":75.1},{"id":17,"name":"Kai Havertz","club":"Arsenal","country":"Germany","rating":82,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":32.8},{"id":18,"name":"Gabriel Jesus","club":"Arsenal","country":"Brazil","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":19,"name":"Bukayo Saka","club":"Arsenal","country":"England","rating":87,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":92.3},{"id":20,"name":"Noni Madueke","club":"Arsenal","country":"England","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":21,"name":"Leandro Trossard","club":"Arsenal","country":"Belgium","rating":83,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":40.3},{"id":22,"name":"Gabriel Martinelli","club":"Arsenal","country":"Brazil","rating":81,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":26.7},{"id":23,"name":"Alisson Becker","club":"Liverpool","country":"Brazil","rating":89,"pos":"GK","positions":["GK"],"cat":"DEF","value":78.9},{"id":24,"name":"Virgil van Dijk","club":"Liverpool","country":"Netherlands","rating":88,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":88.9},{"id":25,"name":"Ibrahima Konate","club":"Liverpool","country":"France","rating":85,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":47.8},{"id":26,"name":"Andrew Robertson","club":"Liverpool","country":"Scotland","rating":81,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":20.9},{"id":27,"name":"Milos Kerkez","club":"Liverpool","country":"Hungary","rating":81,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":20.9},{"id":28,"name":"Jeremie Frimpong","club":"Liverpool","country":"Netherlands","rating":83,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":31.6},{"id":29,"name":"Conor Bradley","club":"Liverpool","country":"Northern Ireland","rating":79,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":13.8},{"id":30,"name":"Alexis Mac Allister","club":"Liverpool","country":"Argentina","rating":86,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":65.3},{"id":31,"name":"Ryan Gravenberch","club":"Liverpool","country":"Netherlands","rating":86,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":65.3},{"id":32,"name":"Dominik Szoboszlai","club":"Liverpool","country":"Hungary","rating":86,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":65.3},{"id":33,"name":"Florian Wirtz","club":"Liverpool","country":"Germany","rating":87,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":80.3},{"id":34,"name":"Curtis Jones","club":"Liverpool","country":"England","rating":80,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":18.8},{"id":35,"name":"Wataru Endo","club":"Liverpool","country":"Japan","rating":79,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":15.3},{"id":36,"name":"Mohamed Salah","club":"Liverpool","country":"Egypt","rating":89,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":139.7},{"id":37,"name":"Alexander Isak","club":"Liverpool","country":"Sweden","rating":87,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":92.3},{"id":38,"name":"Cody Gakpo","club":"Liverpool","country":"Netherlands","rating":83,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":40.3},{"id":39,"name":"Hugo Ekitike","club":"Liverpool","country":"France","rating":85,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":61.0},{"id":40,"name":"Federico Chiesa","club":"Liverpool","country":"Italy","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":41,"name":"Ederson","club":"Manchester City","country":"Brazil","rating":86,"pos":"GK","positions":["GK"],"cat":"DEF","value":42.4},{"id":42,"name":"Ruben Dias","club":"Manchester City","country":"Portugal","rating":87,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":72.2},{"id":43,"name":"Josko Gvardiol","club":"Manchester City","country":"Croatia","rating":85,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":47.8},{"id":44,"name":"Nathan Ake","club":"Manchester City","country":"Netherlands","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":45,"name":"John Stones","club":"Manchester City","country":"England","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":46,"name":"Rayan Ait-Nouri","club":"Manchester City","country":"Algeria","rating":81,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":20.9},{"id":47,"name":"Marc Guehi","club":"Manchester City","country":"England","rating":84,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":38.8},{"id":48,"name":"Rodri","club":"Manchester City","country":"Spain","rating":89,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":121.4},{"id":49,"name":"Bernardo Silva","club":"Manchester City","country":"Portugal","rating":83,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":35.1},{"id":50,"name":"Mateo Kovacic","club":"Manchester City","country":"Croatia","rating":82,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":28.5},{"id":51,"name":"Nico Gonzalez","club":"Manchester City","country":"Spain","rating":81,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":23.2},{"id":52,"name":"Matheus Nunes","club":"Manchester City","country":"Portugal","rating":82,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":28.5},{"id":53,"name":"Tijjani Reijnders","club":"Manchester City","country":"Netherlands","rating":86,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":65.3},{"id":54,"name":"Phil Foden","club":"Manchester City","country":"England","rating":85,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":61.0},{"id":55,"name":"Erling Haaland","club":"Manchester City","country":"Norway","rating":91,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":211.3},{"id":56,"name":"Jeremy Doku","club":"Manchester City","country":"Belgium","rating":83,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":40.3},{"id":57,"name":"Omar Marmoush","club":"Manchester City","country":"Egypt","rating":84,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":49.6},{"id":58,"name":"Savinho","club":"Manchester City","country":"Brazil","rating":82,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":32.8},{"id":59,"name":"Emiliano Martinez","club":"Aston Villa","country":"Argentina","rating":85,"pos":"GK","positions":["GK"],"cat":"DEF","value":34.5},{"id":60,"name":"Pau Torres","club":"Aston Villa","country":"Spain","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":61,"name":"Ezri Konsa","club":"Aston Villa","country":"England","rating":84,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":38.8},{"id":62,"name":"Matty Cash","club":"Aston Villa","country":"England","rating":81,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":20.9},{"id":63,"name":"Lucas Digne","club":"Aston Villa","country":"France","rating":80,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":17.0},{"id":64,"name":"Tyrone Mings","club":"Aston Villa","country":"England","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":65,"name":"Ian Maatsen","club":"Aston Villa","country":"Netherlands","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":66,"name":"Youri Tielemans","club":"Aston Villa","country":"Belgium","rating":85,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":53.1},{"id":67,"name":"Boubacar Kamara","club":"Aston Villa","country":"France","rating":84,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":43.1},{"id":68,"name":"Amadou Onana","club":"Aston Villa","country":"Belgium","rating":81,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":23.2},{"id":69,"name":"John McGinn","club":"Aston Villa","country":"Scotland","rating":81,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":23.2},{"id":70,"name":"Emiliano Buendia","club":"Aston Villa","country":"Argentina","rating":78,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":12.5},{"id":71,"name":"Ross Barkley","club":"Aston Villa","country":"England","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":72,"name":"Douglas Luiz","club":"Aston Villa","country":"Brazil","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":73,"name":"Morgan Rogers","club":"Aston Villa","country":"England","rating":84,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":49.6},{"id":74,"name":"Ollie Watkins","club":"Aston Villa","country":"England","rating":82,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":32.8},{"id":75,"name":"Jadon Sancho","club":"Aston Villa","country":"England","rating":79,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":17.6},{"id":76,"name":"Leon Bailey","club":"Aston Villa","country":"Jamaica","rating":78,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":14.3},{"id":77,"name":"Robert Sanchez","club":"Chelsea","country":"Spain","rating":80,"pos":"GK","positions":["GK"],"cat":"DEF","value":12.3},{"id":78,"name":"Levi Colwill","club":"Chelsea","country":"England","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":79,"name":"Wesley Fofana","club":"Chelsea","country":"France","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":80,"name":"Marc Cucurella","club":"Chelsea","country":"Spain","rating":85,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":47.8},{"id":81,"name":"Reece James","club":"Chelsea","country":"England","rating":84,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":38.8},{"id":82,"name":"Trevoh Chalobah","club":"Chelsea","country":"England","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":83,"name":"Moises Caicedo","club":"Chelsea","country":"Ecuador","rating":88,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":98.7},{"id":84,"name":"Enzo Fernandez","club":"Chelsea","country":"Argentina","rating":85,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":53.1},{"id":85,"name":"Romeo Lavia","club":"Chelsea","country":"Belgium","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":86,"name":"Andrey Santos","club":"Chelsea","country":"Brazil","rating":80,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":18.8},{"id":87,"name":"Dario Essugo","club":"Chelsea","country":"Portugal","rating":75,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":6.7},{"id":88,"name":"Cole Palmer","club":"Chelsea","country":"England","rating":86,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":65.3},{"id":89,"name":"Pedro Neto","club":"Chelsea","country":"Portugal","rating":82,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":32.8},{"id":90,"name":"Estevao","club":"Chelsea","country":"Brazil","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":91,"name":"Joao Pedro","club":"Chelsea","country":"Brazil","rating":82,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":32.8},{"id":92,"name":"Liam Delap","club":"Chelsea","country":"England","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":93,"name":"Jamie Gittens","club":"Chelsea","country":"England","rating":78,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":14.3},{"id":94,"name":"Alejandro Garnacho","club":"Chelsea","country":"Argentina","rating":78,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":14.3},{"id":95,"name":"Aaron Ramsdale","club":"Newcastle United","country":"England","rating":77,"pos":"GK","positions":["GK"],"cat":"DEF","value":6.6},{"id":96,"name":"Sven Botman","club":"Newcastle United","country":"Netherlands","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":97,"name":"Dan Burn","club":"Newcastle United","country":"England","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":98,"name":"Fabian Schar","club":"Newcastle United","country":"Switzerland","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":99,"name":"Malick Thiaw","club":"Newcastle United","country":"Germany","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":100,"name":"Kieran Trippier","club":"Newcastle United","country":"England","rating":79,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":13.8},{"id":101,"name":"Tino Livramento","club":"Newcastle United","country":"England","rating":80,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":17.0},{"id":102,"name":"Lewis Hall","club":"Newcastle United","country":"England","rating":81,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":20.9},{"id":103,"name":"Bruno Guimaraes","club":"Newcastle United","country":"Brazil","rating":86,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":65.3},{"id":104,"name":"Sandro Tonali","club":"Newcastle United","country":"Italy","rating":85,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":53.1},{"id":105,"name":"Joelinton","club":"Newcastle United","country":"Brazil","rating":81,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":23.2},{"id":106,"name":"Anthony Gordon","club":"Newcastle United","country":"England","rating":82,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":32.8},{"id":107,"name":"Harvey Barnes","club":"Newcastle United","country":"England","rating":80,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":21.7},{"id":108,"name":"Jacob Murphy","club":"Newcastle United","country":"England","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":109,"name":"Anthony Elanga","club":"Newcastle United","country":"Sweden","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":110,"name":"Yoane Wissa","club":"Newcastle United","country":"DR Congo","rating":81,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":26.7},{"id":111,"name":"Nick Woltemade","club":"Newcastle United","country":"Germany","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":112,"name":"William Osula","club":"Newcastle United","country":"Denmark","rating":73,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":5.1},{"id":113,"name":"Guglielmo Vicario","club":"Tottenham Hotspur","country":"Italy","rating":82,"pos":"GK","positions":["GK"],"cat":"DEF","value":18.5},{"id":114,"name":"Micky van de Ven","club":"Tottenham Hotspur","country":"Netherlands","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":115,"name":"Cristian Romero","club":"Tottenham Hotspur","country":"Argentina","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":116,"name":"Kevin Danso","club":"Tottenham Hotspur","country":"Austria","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":117,"name":"Djed Spence","club":"Tottenham Hotspur","country":"England","rating":79,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":13.8},{"id":118,"name":"Destiny Udogie","club":"Tottenham Hotspur","country":"Italy","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":119,"name":"Pedro Porro","club":"Tottenham Hotspur","country":"Spain","rating":82,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":25.7},{"id":120,"name":"Rodrigo Bentancur","club":"Tottenham Hotspur","country":"Uruguay","rating":80,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":18.8},{"id":121,"name":"Yves Bissouma","club":"Tottenham Hotspur","country":"Mali","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":122,"name":"Pape Matar Sarr","club":"Tottenham Hotspur","country":"Senegal","rating":80,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":18.8},{"id":123,"name":"Joao Palhinha","club":"Tottenham Hotspur","country":"Portugal","rating":82,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":28.5},{"id":124,"name":"James Maddison","club":"Tottenham Hotspur","country":"England","rating":83,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":35.1},{"id":125,"name":"Xavi Simons","club":"Tottenham Hotspur","country":"Netherlands","rating":82,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":28.5},{"id":126,"name":"Dejan Kulusevski","club":"Tottenham Hotspur","country":"Sweden","rating":83,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":40.3},{"id":127,"name":"Mohammed Kudus","club":"Tottenham Hotspur","country":"Ghana","rating":81,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":26.7},{"id":128,"name":"Dominic Solanke","club":"Tottenham Hotspur","country":"England","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":129,"name":"Richarlison","club":"Tottenham Hotspur","country":"Brazil","rating":79,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":17.6},{"id":130,"name":"Randal Kolo Muani","club":"Tottenham Hotspur","country":"France","rating":79,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":17.6},{"id":131,"name":"Andre Onana","club":"Manchester United","country":"Cameroon","rating":80,"pos":"GK","positions":["GK"],"cat":"DEF","value":12.3},{"id":132,"name":"Matthijs de Ligt","club":"Manchester United","country":"Netherlands","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":133,"name":"Harry Maguire","club":"Manchester United","country":"England","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":134,"name":"Leny Yoro","club":"Manchester United","country":"France","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":135,"name":"Diogo Dalot","club":"Manchester United","country":"Portugal","rating":78,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":11.2},{"id":136,"name":"Luke Shaw","club":"Manchester United","country":"England","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":137,"name":"Lisandro Martinez","club":"Manchester United","country":"Argentina","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":138,"name":"Patrick Dorgu","club":"Manchester United","country":"Denmark","rating":77,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":9.1},{"id":139,"name":"Casemiro","club":"Manchester United","country":"Brazil","rating":82,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":28.5},{"id":140,"name":"Manuel Ugarte","club":"Manchester United","country":"Uruguay","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":141,"name":"Kobbie Mainoo","club":"Manchester United","country":"England","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":142,"name":"Bruno Fernandes","club":"Manchester United","country":"Portugal","rating":88,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":98.7},{"id":143,"name":"Mason Mount","club":"Manchester United","country":"England","rating":78,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":12.5},{"id":144,"name":"Matheus Cunha","club":"Manchester United","country":"Brazil","rating":83,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":40.3},{"id":145,"name":"Bryan Mbeumo","club":"Manchester United","country":"Cameroon","rating":85,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":61.0},{"id":146,"name":"Amad Diallo","club":"Manchester United","country":"Ivory Coast","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":147,"name":"Benjamin Sesko","club":"Manchester United","country":"Slovenia","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":148,"name":"Joshua Zirkzee","club":"Manchester United","country":"Netherlands","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":149,"name":"Matz Sels","club":"Nottingham Forest","country":"Belgium","rating":83,"pos":"GK","positions":["GK"],"cat":"DEF","value":22.8},{"id":150,"name":"Murillo","club":"Nottingham Forest","country":"Brazil","rating":82,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":25.7},{"id":151,"name":"Nikola Milenkovic","club":"Nottingham Forest","country":"Serbia","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":152,"name":"Ola Aina","club":"Nottingham Forest","country":"Nigeria","rating":80,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":17.0},{"id":153,"name":"Neco Williams","club":"Nottingham Forest","country":"Wales","rating":80,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":17.0},{"id":154,"name":"Morato","club":"Nottingham Forest","country":"Brazil","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":155,"name":"Jair Cunha","club":"Nottingham Forest","country":"Brazil","rating":74,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.9},{"id":156,"name":"Willy Boly","club":"Nottingham Forest","country":"Ivory Coast","rating":73,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.0},{"id":157,"name":"Morgan Gibbs-White","club":"Nottingham Forest","country":"England","rating":81,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":23.2},{"id":158,"name":"Elliot Anderson","club":"Nottingham Forest","country":"England","rating":82,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":28.5},{"id":159,"name":"Ibrahim Sangare","club":"Nottingham Forest","country":"Ivory Coast","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":160,"name":"Nicolas Dominguez","club":"Nottingham Forest","country":"Argentina","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":161,"name":"Ryan Yates","club":"Nottingham Forest","country":"England","rating":76,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":8.2},{"id":162,"name":"Callum Hudson-Odoi","club":"Nottingham Forest","country":"England","rating":78,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":14.3},{"id":163,"name":"Dan Ndoye","club":"Nottingham Forest","country":"Switzerland","rating":77,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":11.6},{"id":164,"name":"Chris Wood","club":"Nottingham Forest","country":"New Zealand","rating":81,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":26.7},{"id":165,"name":"Igor Jesus","club":"Nottingham Forest","country":"Brazil","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":166,"name":"Taiwo Awoniyi","club":"Nottingham Forest","country":"Nigeria","rating":74,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":6.3},{"id":167,"name":"Dean Henderson","club":"Crystal Palace","country":"England","rating":82,"pos":"GK","positions":["GK"],"cat":"DEF","value":18.5},{"id":168,"name":"Maxence Lacroix","club":"Crystal Palace","country":"France","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":169,"name":"Chris Richards","club":"Crystal Palace","country":"USA","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":170,"name":"Daniel Munoz","club":"Crystal Palace","country":"Colombia","rating":82,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":25.7},{"id":171,"name":"Tyrick Mitchell","club":"Crystal Palace","country":"England","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":172,"name":"Adam Wharton","club":"Crystal Palace","country":"England","rating":81,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":23.2},{"id":173,"name":"Jefferson Lerma","club":"Crystal Palace","country":"Colombia","rating":77,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":10.1},{"id":174,"name":"Cheick Doucoure","club":"Crystal Palace","country":"Mali","rating":77,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":10.1},{"id":175,"name":"Will Hughes","club":"Crystal Palace","country":"England","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":176,"name":"Daichi Kamada","club":"Crystal Palace","country":"Japan","rating":78,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":12.5},{"id":177,"name":"Justin Devenny","club":"Crystal Palace","country":"Northern Ireland","rating":71,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":2.9},{"id":178,"name":"Ismaila Sarr","club":"Crystal Palace","country":"Senegal","rating":81,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":26.7},{"id":179,"name":"Jean-Philippe Mateta","club":"Crystal Palace","country":"France","rating":82,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":32.8},{"id":180,"name":"Eddie Nketiah","club":"Crystal Palace","country":"England","rating":75,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":7.7},{"id":181,"name":"Yeremy Pino","club":"Crystal Palace","country":"Spain","rating":79,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":17.6},{"id":182,"name":"Jorge Strand Larsen","club":"Crystal Palace","country":"Norway","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":183,"name":"Christantus Uche","club":"Crystal Palace","country":"Nigeria","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":184,"name":"Ben Johnson","club":"Crystal Palace","country":"England","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":185,"name":"Djordje Petrovic","club":"AFC Bournemouth","country":"Serbia","rating":79,"pos":"GK","positions":["GK"],"cat":"DEF","value":10.0},{"id":186,"name":"Marcos Senesi","club":"AFC Bournemouth","country":"Argentina","rating":81,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":20.9},{"id":187,"name":"Bafode Diakite","club":"AFC Bournemouth","country":"France","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":188,"name":"Adrien Truffert","club":"AFC Bournemouth","country":"France","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":189,"name":"Alex Jimenez","club":"AFC Bournemouth","country":"Spain","rating":77,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":9.1},{"id":190,"name":"James Hill","club":"AFC Bournemouth","country":"England","rating":74,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.9},{"id":191,"name":"Ryan Christie","club":"AFC Bournemouth","country":"Scotland","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":192,"name":"Tyler Adams","club":"AFC Bournemouth","country":"USA","rating":79,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":15.3},{"id":193,"name":"Alex Scott","club":"AFC Bournemouth","country":"England","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":194,"name":"Lewis Cook","club":"AFC Bournemouth","country":"England","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":195,"name":"Marcus Tavernier","club":"AFC Bournemouth","country":"England","rating":78,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":14.3},{"id":196,"name":"Justin Kluivert","club":"AFC Bournemouth","country":"Netherlands","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":197,"name":"Evanilson","club":"AFC Bournemouth","country":"Brazil","rating":79,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":17.6},{"id":198,"name":"Enes Unal","club":"AFC Bournemouth","country":"Turkey","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":199,"name":"Rayan","club":"AFC Bournemouth","country":"Brazil","rating":77,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":11.6},{"id":200,"name":"David Brooks","club":"AFC Bournemouth","country":"Wales","rating":76,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":9.5},{"id":201,"name":"Eli Junior Kroupi","club":"AFC Bournemouth","country":"France","rating":78,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":14.3},{"id":202,"name":"Antoine Semenyo","club":"AFC Bournemouth","country":"England","rating":84,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":49.6},{"id":203,"name":"Caoimhin Kelleher","club":"Brentford","country":"Ireland","rating":79,"pos":"GK","positions":["GK"],"cat":"DEF","value":10.0},{"id":204,"name":"Nathan Collins","club":"Brentford","country":"Ireland","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":205,"name":"Sepp van den Berg","club":"Brentford","country":"Netherlands","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":206,"name":"Kristoffer Ajer","club":"Brentford","country":"Norway","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":207,"name":"Rico Henry","club":"Brentford","country":"England","rating":76,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":7.4},{"id":208,"name":"Keane Lewis-Potter","club":"Brentford","country":"England","rating":76,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":7.4},{"id":209,"name":"Michael Kayode","club":"Brentford","country":"Italy","rating":80,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":17.0},{"id":210,"name":"Aaron Hickey","club":"Brentford","country":"Scotland","rating":75,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":6.0},{"id":211,"name":"Mathias Jensen","club":"Brentford","country":"Denmark","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":212,"name":"Vitaly Janelt","club":"Brentford","country":"Germany","rating":77,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":10.1},{"id":213,"name":"Yehor Yarmoliuk","club":"Brentford","country":"Ukraine","rating":77,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":10.1},{"id":214,"name":"Jordan Henderson","club":"Brentford","country":"England","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":215,"name":"Mikkel Damsgaard","club":"Brentford","country":"Denmark","rating":80,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":18.8},{"id":216,"name":"Fabio Carvalho","club":"Brentford","country":"Portugal","rating":74,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":5.4},{"id":217,"name":"Kevin Schade","club":"Brentford","country":"Germany","rating":79,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":17.6},{"id":218,"name":"Dango Ouattara","club":"Brentford","country":"Burkina Faso","rating":78,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":14.3},{"id":219,"name":"Igor Thiago","club":"Brentford","country":"Brazil","rating":81,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":26.7},{"id":220,"name":"Reiss Nelson","club":"Brentford","country":"England","rating":75,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":7.7},{"id":221,"name":"Bart Verbruggen","club":"Brighton & Hove Albion","country":"Netherlands","rating":80,"pos":"GK","positions":["GK"],"cat":"DEF","value":12.3},{"id":222,"name":"Lewis Dunk","club":"Brighton & Hove Albion","country":"England","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":223,"name":"Jan Paul van Hecke","club":"Brighton & Hove Albion","country":"Netherlands","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":224,"name":"Olivier Boscagli","club":"Brighton & Hove Albion","country":"France","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":225,"name":"Ferdi Kadioglu","club":"Brighton & Hove Albion","country":"Turkey","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":226,"name":"Maxim De Cuyper","club":"Brighton & Hove Albion","country":"Belgium","rating":79,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":13.8},{"id":227,"name":"Igor Julio","club":"Brighton & Hove Albion","country":"Brazil","rating":75,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":6.0},{"id":228,"name":"Carlos Baleba","club":"Brighton & Hove Albion","country":"Cameroon","rating":80,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":18.8},{"id":229,"name":"Yasin Ayari","club":"Brighton & Hove Albion","country":"Sweden","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":230,"name":"Matt O'Riley","club":"Brighton & Hove Albion","country":"Denmark","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":231,"name":"Diego Gomez","club":"Brighton & Hove Albion","country":"Paraguay","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":232,"name":"Georginio Rutter","club":"Brighton & Hove Albion","country":"France","rating":77,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":10.1},{"id":233,"name":"Jack Hinshelwood","club":"Brighton & Hove Albion","country":"England","rating":76,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":8.2},{"id":234,"name":"James Milner","club":"Brighton & Hove Albion","country":"England","rating":73,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":4.4},{"id":235,"name":"Kaoru Mitoma","club":"Brighton & Hove Albion","country":"Japan","rating":81,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":26.7},{"id":236,"name":"Yankuba Minteh","club":"Brighton & Hove Albion","country":"Gambia","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":237,"name":"Danny Welbeck","club":"Brighton & Hove Albion","country":"England","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":238,"name":"Charalampos Kostoulas","club":"Brighton & Hove Albion","country":"Greece","rating":73,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":5.1},{"id":239,"name":"Bernd Leno","club":"Fulham","country":"Germany","rating":79,"pos":"GK","positions":["GK"],"cat":"DEF","value":10.0},{"id":240,"name":"Joachim Andersen","club":"Fulham","country":"Denmark","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":241,"name":"Calvin Bassey","club":"Fulham","country":"Nigeria","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":242,"name":"Issa Diop","club":"Fulham","country":"France","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":243,"name":"Kenny Tete","club":"Fulham","country":"Netherlands","rating":78,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":11.2},{"id":244,"name":"Timothy Castagne","club":"Fulham","country":"Belgium","rating":75,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":6.0},{"id":245,"name":"Antonee Robinson","club":"Fulham","country":"USA","rating":82,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":25.7},{"id":246,"name":"Ryan Sessegnon","club":"Fulham","country":"England","rating":77,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":9.1},{"id":247,"name":"Jorge Cuenca","club":"Fulham","country":"Spain","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":248,"name":"Sander Berge","club":"Fulham","country":"Norway","rating":79,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":15.3},{"id":249,"name":"Sasa Lukic","club":"Fulham","country":"Serbia","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":250,"name":"Tom Cairney","club":"Fulham","country":"Scotland","rating":74,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":5.4},{"id":251,"name":"Emile Smith Rowe","club":"Fulham","country":"England","rating":77,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":10.1},{"id":252,"name":"Alex Iwobi","club":"Fulham","country":"Nigeria","rating":80,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":21.7},{"id":253,"name":"Harry Wilson","club":"Fulham","country":"Wales","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":254,"name":"Samuel Chukwueze","club":"Fulham","country":"Nigeria","rating":80,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":21.7},{"id":255,"name":"Rodrigo Muniz","club":"Fulham","country":"Brazil","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":256,"name":"Raul Jimenez","club":"Fulham","country":"Mexico","rating":78,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":14.3},{"id":257,"name":"Jordan Pickford","club":"Everton","country":"England","rating":85,"pos":"GK","positions":["GK"],"cat":"DEF","value":34.5},{"id":258,"name":"Jarrad Branthwaite","club":"Everton","country":"England","rating":79,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":13.8},{"id":259,"name":"James Tarkowski","club":"Everton","country":"England","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":260,"name":"Michael Keane","club":"Everton","country":"England","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":261,"name":"Vitaliy Mykolenko","club":"Everton","country":"Ukraine","rating":77,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":9.1},{"id":262,"name":"Jake O'Brien","club":"Everton","country":"Ireland","rating":76,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":7.4},{"id":263,"name":"Idrissa Gueye","club":"Everton","country":"Senegal","rating":79,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":15.3},{"id":264,"name":"Kiernan Dewsbury-Hall","club":"Everton","country":"England","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":265,"name":"Carlos Alcaraz","club":"Everton","country":"Argentina","rating":75,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":6.7},{"id":266,"name":"Merlin Rohl","club":"Everton","country":"Germany","rating":74,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":5.4},{"id":267,"name":"James Garner","club":"Everton","country":"England","rating":81,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":23.2},{"id":268,"name":"Tim Iroegbunam","club":"Everton","country":"England","rating":76,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":8.2},{"id":269,"name":"Jack Grealish","club":"Everton","country":"England","rating":82,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":32.8},{"id":270,"name":"Iliman Ndiaye","club":"Everton","country":"Senegal","rating":82,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":32.8},{"id":271,"name":"Dwight McNeil","club":"Everton","country":"England","rating":77,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":11.6},{"id":272,"name":"Thierno Barry","club":"Everton","country":"France","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":273,"name":"Beto","club":"Everton","country":"Portugal","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":274,"name":"Tyler Dibling","club":"Everton","country":"England","rating":74,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":6.3},{"id":275,"name":"Anthony Patterson","club":"Sunderland","country":"England","rating":76,"pos":"GK","positions":["GK"],"cat":"DEF","value":5.4},{"id":276,"name":"Omar Alderete","club":"Sunderland","country":"Paraguay","rating":80,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":17.0},{"id":277,"name":"Dan Ballard","club":"Sunderland","country":"Northern Ireland","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":278,"name":"Nordi Mukiele","club":"Sunderland","country":"France","rating":80,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":17.0},{"id":279,"name":"Reinildo Mandava","club":"Sunderland","country":"Mozambique","rating":80,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":17.0},{"id":280,"name":"Trai Hume","club":"Sunderland","country":"Northern Ireland","rating":78,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":11.2},{"id":281,"name":"Lutsharel Geertruida","club":"Sunderland","country":"Netherlands","rating":78,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":11.2},{"id":282,"name":"Granit Xhaka","club":"Sunderland","country":"Switzerland","rating":85,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":53.1},{"id":283,"name":"Habib Diarra","club":"Sunderland","country":"France","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":284,"name":"Noah Sadiki","club":"Sunderland","country":"Belgium","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":285,"name":"Enzo Le Fee","club":"Sunderland","country":"France","rating":78,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":12.5},{"id":286,"name":"Chris Rigg","club":"Sunderland","country":"England","rating":72,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":3.6},{"id":287,"name":"Chemsdine Talbi","club":"Sunderland","country":"Belgium","rating":76,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":9.5},{"id":288,"name":"Romaine Mundle","club":"Sunderland","country":"England","rating":71,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":3.4},{"id":289,"name":"Bertrand Traore","club":"Sunderland","country":"Burkina Faso","rating":75,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":7.7},{"id":290,"name":"Brian Brobbey","club":"Sunderland","country":"Netherlands","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":291,"name":"Wilson Isidor","club":"Sunderland","country":"France","rating":75,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":7.7},{"id":292,"name":"Eliezer Mayenda","club":"Sunderland","country":"Spain","rating":72,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":4.1},{"id":293,"name":"Alphonse Areola","club":"West Ham United","country":"France","rating":77,"pos":"GK","positions":["GK"],"cat":"DEF","value":6.6},{"id":294,"name":"Aaron Wan-Bissaka","club":"West Ham United","country":"England","rating":79,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":13.8},{"id":295,"name":"Konstantinos Mavropanos","club":"West Ham United","country":"Greece","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":296,"name":"Jean-Clair Todibo","club":"West Ham United","country":"France","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":297,"name":"Max Kilman","club":"West Ham United","country":"England","rating":75,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":6.0},{"id":298,"name":"Kyle Walker-Peters","club":"West Ham United","country":"England","rating":76,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":7.4},{"id":299,"name":"Oliver Scarles","club":"West Ham United","country":"England","rating":72,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":3.2},{"id":300,"name":"El Hadji Malick Diouf","club":"West Ham United","country":"Senegal","rating":78,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":11.2},{"id":301,"name":"Mateus Fernandes","club":"West Ham United","country":"Portugal","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":302,"name":"Tomas Soucek","club":"West Ham United","country":"Czech Republic","rating":76,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":8.2},{"id":303,"name":"Freddie Potts","club":"West Ham United","country":"England","rating":73,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":4.4},{"id":304,"name":"Soungoutou Magassa","club":"West Ham United","country":"France","rating":73,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":4.4},{"id":305,"name":"Kalvin Phillips","club":"West Ham United","country":"England","rating":72,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":3.6},{"id":306,"name":"Jarrod Bowen","club":"West Ham United","country":"England","rating":83,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":40.3},{"id":307,"name":"Crysencio Summerville","club":"West Ham United","country":"Netherlands","rating":78,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":14.3},{"id":308,"name":"Valentin Castellanos","club":"West Ham United","country":"Argentina","rating":80,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":21.7},{"id":309,"name":"Callum Wilson","club":"West Ham United","country":"England","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":310,"name":"Adama Traore","club":"West Ham United","country":"Mali","rating":75,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":7.7},{"id":311,"name":"Lucas Perri","club":"Leeds United","country":"Brazil","rating":78,"pos":"GK","positions":["GK"],"cat":"DEF","value":8.1},{"id":312,"name":"Pascal Struijk","club":"Leeds United","country":"Netherlands","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":313,"name":"Joe Rodon","club":"Leeds United","country":"Wales","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":314,"name":"Jaka Bijol","club":"Leeds United","country":"Slovenia","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":315,"name":"Sebastiaan Bornauw","club":"Leeds United","country":"Belgium","rating":74,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.9},{"id":316,"name":"Jayden Bogle","club":"Leeds United","country":"England","rating":76,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":7.4},{"id":317,"name":"Gabriel Gudmundsson","club":"Leeds United","country":"Sweden","rating":77,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":9.1},{"id":318,"name":"Ethan Ampadu","club":"Leeds United","country":"Wales","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":319,"name":"Anton Stach","club":"Leeds United","country":"Germany","rating":79,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":15.3},{"id":320,"name":"Ilia Gruev","club":"Leeds United","country":"Bulgaria","rating":75,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":6.7},{"id":321,"name":"Sean Longstaff","club":"Leeds United","country":"England","rating":76,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":8.2},{"id":322,"name":"Brenden Aaronson","club":"Leeds United","country":"USA","rating":76,"pos":"CAM","positions":["CAM","CM","LW","RW"],"cat":"MID","value":8.2},{"id":323,"name":"Daniel James","club":"Leeds United","country":"Wales","rating":76,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":9.5},{"id":324,"name":"Wilfried Gnonto","club":"Leeds United","country":"Italy","rating":74,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":6.3},{"id":325,"name":"Joel Piroe","club":"Leeds United","country":"Netherlands","rating":75,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":7.7},{"id":326,"name":"Lukas Nmecha","club":"Leeds United","country":"Germany","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":327,"name":"Dominic Calvert-Lewin","club":"Leeds United","country":"England","rating":77,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":11.6},{"id":328,"name":"Noah Okafor","club":"Leeds United","country":"Switzerland","rating":76,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":9.5},{"id":329,"name":"Jose Sa","club":"Wolverhampton Wanderers","country":"Portugal","rating":76,"pos":"GK","positions":["GK"],"cat":"DEF","value":5.4},{"id":330,"name":"Ladislav Krejci","club":"Wolverhampton Wanderers","country":"Czech Republic","rating":78,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":11.2},{"id":331,"name":"Santiago Bueno","club":"Wolverhampton Wanderers","country":"Mexico","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":332,"name":"Toti Gomes","club":"Wolverhampton Wanderers","country":"Portugal","rating":75,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":6.0},{"id":333,"name":"Yerson Mosquera","club":"Wolverhampton Wanderers","country":"Colombia","rating":72,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":3.2},{"id":334,"name":"Matt Doherty","club":"Wolverhampton Wanderers","country":"Ireland","rating":74,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":4.9},{"id":335,"name":"Jackson Tchatchoua","club":"Wolverhampton Wanderers","country":"Belgium","rating":74,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":4.9},{"id":336,"name":"Hugo Bueno","club":"Wolverhampton Wanderers","country":"Spain","rating":75,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":6.0},{"id":337,"name":"Emmanuel Agbadou","club":"Wolverhampton Wanderers","country":"Ivory Coast","rating":77,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":9.1},{"id":338,"name":"David Wolfe","club":"Wolverhampton Wanderers","country":"England","rating":73,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":4.0},{"id":339,"name":"Joao Gomes","club":"Wolverhampton Wanderers","country":"Brazil","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":340,"name":"Andre","club":"Wolverhampton Wanderers","country":"Brazil","rating":78,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":12.5},{"id":341,"name":"Jean-Ricner Bellegarde","club":"Wolverhampton Wanderers","country":"France","rating":75,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":6.7},{"id":342,"name":"Mateus Mane","club":"Wolverhampton Wanderers","country":"Portugal","rating":71,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":2.9},{"id":343,"name":"Hwang Hee-chan","club":"Wolverhampton Wanderers","country":"South Korea","rating":74,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":6.3},{"id":344,"name":"Tolu Arokodare","club":"Wolverhampton Wanderers","country":"Nigeria","rating":76,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":9.5},{"id":345,"name":"Rodrigo Gomes","club":"Wolverhampton Wanderers","country":"Portugal","rating":73,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":5.1},{"id":346,"name":"Fer Lopez","club":"Wolverhampton Wanderers","country":"Spain","rating":73,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":5.1},{"id":347,"name":"Martin Dubravka","club":"Burnley","country":"Slovakia","rating":78,"pos":"GK","positions":["GK"],"cat":"DEF","value":8.1},{"id":348,"name":"Kyle Walker","club":"Burnley","country":"England","rating":77,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":9.1},{"id":349,"name":"Maxime Esteve","club":"Burnley","country":"France","rating":76,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":7.4},{"id":350,"name":"Joe Worrall","club":"Burnley","country":"England","rating":73,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.0},{"id":351,"name":"Hjalmar Ekdal","club":"Burnley","country":"Sweden","rating":72,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":3.2},{"id":352,"name":"Jordan Beyer","club":"Burnley","country":"Germany","rating":73,"pos":"CB","positions":["CB","LB","RB"],"cat":"DEF","value":4.0},{"id":353,"name":"Quilindschy Hartman","club":"Burnley","country":"Netherlands","rating":76,"pos":"LB","positions":["LB","CB","LM"],"cat":"DEF","value":7.4},{"id":354,"name":"Connor Roberts","club":"Burnley","country":"Wales","rating":74,"pos":"RB","positions":["RB","CB","RM"],"cat":"DEF","value":4.9},{"id":355,"name":"Lesley Ugochukwu","club":"Burnley","country":"France","rating":76,"pos":"CDM","positions":["CDM","CM"],"cat":"MID","value":8.2},{"id":356,"name":"Florentino","club":"Burnley","country":"Portugal","rating":78,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":12.5},{"id":357,"name":"Josh Cullen","club":"Burnley","country":"Ireland","rating":77,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":10.1},{"id":358,"name":"James Ward-Prowse","club":"Burnley","country":"England","rating":75,"pos":"CM","positions":["CM","CDM","CAM"],"cat":"MID","value":6.7},{"id":359,"name":"Jacob Bruun Larsen","club":"Burnley","country":"Denmark","rating":73,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":5.1},{"id":360,"name":"Marcus Edwards","club":"Burnley","country":"England","rating":75,"pos":"RW","positions":["RW","RM","LW","ST"],"cat":"ATT","value":7.7},{"id":361,"name":"Zian Flemming","club":"Burnley","country":"Netherlands","rating":75,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":7.7},{"id":362,"name":"Loum Tchaouna","club":"Burnley","country":"France","rating":72,"pos":"LW","positions":["LW","LM","RW","ST"],"cat":"ATT","value":4.1},{"id":363,"name":"Armando Broja","club":"Burnley","country":"Albania","rating":72,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":4.1},{"id":364,"name":"Zeki Amdouni","club":"Burnley","country":"Switzerland","rating":75,"pos":"ST","positions":["ST","CAM"],"cat":"ATT","value":7.7}];
+const CLUBS = Array.from(new Set(BASE_PLAYERS.map((p) => p.club))).sort();
+
+/* ============================================================
+   FORMATIONS
+   ============================================================ */
+const FORMATIONS = {
+  "4-4-2": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "lb", pos: "LB", x: 14, y: 73 }, { id: "cb1", pos: "CB", x: 36, y: 76 },
+    { id: "cb2", pos: "CB", x: 64, y: 76 }, { id: "rb", pos: "RB", x: 86, y: 73 },
+    { id: "lm", pos: "LM", x: 14, y: 47 }, { id: "cm1", pos: "CM", x: 38, y: 50 },
+    { id: "cm2", pos: "CM", x: 62, y: 50 }, { id: "rm", pos: "RM", x: 86, y: 47 },
+    { id: "st1", pos: "ST", x: 37, y: 16 }, { id: "st2", pos: "ST", x: 63, y: 16 },
+  ],
+  "4-3-3": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "lb", pos: "LB", x: 14, y: 73 }, { id: "cb1", pos: "CB", x: 36, y: 76 },
+    { id: "cb2", pos: "CB", x: 64, y: 76 }, { id: "rb", pos: "RB", x: 86, y: 73 },
+    { id: "cdm", pos: "CDM", x: 50, y: 58 }, { id: "cm1", pos: "CM", x: 28, y: 46 }, { id: "cm2", pos: "CM", x: 72, y: 46 },
+    { id: "lw", pos: "LW", x: 14, y: 16 }, { id: "st", pos: "ST", x: 50, y: 10 }, { id: "rw", pos: "RW", x: 86, y: 16 },
+  ],
+  "4-2-3-1": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "lb", pos: "LB", x: 14, y: 73 }, { id: "cb1", pos: "CB", x: 36, y: 76 },
+    { id: "cb2", pos: "CB", x: 64, y: 76 }, { id: "rb", pos: "RB", x: 86, y: 73 },
+    { id: "cdm1", pos: "CDM", x: 36, y: 56 }, { id: "cdm2", pos: "CDM", x: 64, y: 56 },
+    { id: "lw", pos: "LW", x: 16, y: 32 }, { id: "cam", pos: "CAM", x: 50, y: 34 }, { id: "rw", pos: "RW", x: 84, y: 32 },
+    { id: "st", pos: "ST", x: 50, y: 10 },
+  ],
+  "3-5-2": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "cb1", pos: "CB", x: 28, y: 76 }, { id: "cb2", pos: "CB", x: 50, y: 79 }, { id: "cb3", pos: "CB", x: 72, y: 76 },
+    { id: "lm", pos: "LM", x: 10, y: 50 }, { id: "cm1", pos: "CM", x: 34, y: 46 }, { id: "cdm", pos: "CDM", x: 50, y: 58 },
+    { id: "cm2", pos: "CM", x: 66, y: 46 }, { id: "rm", pos: "RM", x: 90, y: 50 },
+    { id: "st1", pos: "ST", x: 37, y: 16 }, { id: "st2", pos: "ST", x: 63, y: 16 },
+  ],
+  "3-4-3": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "cb1", pos: "CB", x: 28, y: 76 }, { id: "cb2", pos: "CB", x: 50, y: 79 }, { id: "cb3", pos: "CB", x: 72, y: 76 },
+    { id: "lm", pos: "LM", x: 14, y: 50 }, { id: "cm1", pos: "CM", x: 38, y: 48 },
+    { id: "cm2", pos: "CM", x: 62, y: 48 }, { id: "rm", pos: "RM", x: 86, y: 50 },
+    { id: "lw", pos: "LW", x: 14, y: 16 }, { id: "st", pos: "ST", x: 50, y: 10 }, { id: "rw", pos: "RW", x: 86, y: 16 },
+  ],
+  "5-3-2": [
+    { id: "gk", pos: "GK", x: 50, y: 92 },
+    { id: "lb", pos: "LB", x: 10, y: 68 }, { id: "cb1", pos: "CB", x: 30, y: 76 }, { id: "cb2", pos: "CB", x: 50, y: 79 },
+    { id: "cb3", pos: "CB", x: 70, y: 76 }, { id: "rb", pos: "RB", x: 90, y: 68 },
+    { id: "cm1", pos: "CM", x: 30, y: 48 }, { id: "cdm", pos: "CDM", x: 50, y: 53 }, { id: "cm2", pos: "CM", x: 70, y: 48 },
+    { id: "st1", pos: "ST", x: 37, y: 16 }, { id: "st2", pos: "ST", x: 63, y: 16 },
+  ],
+};
+
+const POS_CAT = {
+  GK: "DEF", CB: "DEF", LB: "DEF", RB: "DEF",
+  CDM: "MID", CM: "MID", CAM: "MID", LM: "MID", RM: "MID",
+  LW: "ATT", RW: "ATT", ST: "ATT",
+};
+
+/* ============================================================
+   SIMULATION ENGINE
+   chance creation = 0.65*MID + 0.30*ATT + 0.05*DEF  (per-team rating)
+   gap between teams' creation ratings drives a saturating Poisson rate.
+   MID_SATURATION=6 was tuned empirically: with the old value (15), even
+   the single strongest club in the league averaged only ~68pts/20% title
+   rate over 100 simulated seasons — too little separation between skill
+   levels. At 6, a genuinely dominant squad averages ~83pts and a 38%
+   title rate, without changing the average goals/match (~2.77, still
+   matches real Premier League scoring rates).
+   goals: Bernoulli(CONVERSION_CAP * attack / (attack + oppDefense)) per chance
+   ============================================================ */
+const BASE_CHANCES = 5.0;
+const MID_SATURATION = 6.0;
+const CONVERSION_CAP = 0.55;
+const MID_W = 0.65, ATT_W = 0.30, DEF_W = 0.05;
+
+const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+const creationRating = (t) => MID_W * t.mid + ATT_W * t.att + DEF_W * t.def;
+
+function expectedChances(team, opp) {
+  const gap = creationRating(team) - creationRating(opp);
+  return 2 * BASE_CHANCES * sigmoid(gap / MID_SATURATION);
+}
+function samplePoisson(lambda) {
+  if (lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1.0;
+  do { k += 1; p *= Math.random(); } while (p > L);
+  return k - 1;
+}
+function poissonPmf(x, lambda) {
+  if (x < 0) return 0;
+  let fact = 1;
+  for (let i = 2; i <= x; i++) fact *= i;
+  return (Math.exp(-lambda) * Math.pow(lambda, x)) / fact;
+}
+function goalProbability(attack, oppDefense) {
+  if (attack <= 0 && oppDefense <= 0) return 0.5 * CONVERSION_CAP;
+  return (CONVERSION_CAP * attack) / (attack + oppDefense);
+}
+function resolveChances(numChances, attack, oppDefense) {
+  const p = goalProbability(attack, oppDefense);
+  let goals = 0;
+  for (let i = 0; i < numChances; i++) if (Math.random() < p) goals++;
+  return goals;
+}
+function simulateMatch(home, away) {
+  const homeLambda = expectedChances(home, away);
+  const awayLambda = expectedChances(away, home);
+  const homeChances = samplePoisson(homeLambda);
+  const awayChances = samplePoisson(awayLambda);
+  const homeConv = goalProbability(home.att, away.def);
+  const awayConv = goalProbability(away.att, home.def);
+  const homeGoals = resolveChances(homeChances, home.att, away.def);
+  const awayGoals = resolveChances(awayChances, away.att, home.def);
+  return { homeChances, awayChances, homeGoals, awayGoals, homeConv, awayConv };
+}
+function simulateMany(home, away, n) {
+  let hw = 0, dr = 0, aw = 0, hg = 0, ag = 0, hc = 0, ac = 0;
+  for (let i = 0; i < n; i++) {
+    const r = simulateMatch(home, away);
+    if (r.homeGoals > r.awayGoals) hw++; else if (r.homeGoals < r.awayGoals) aw++; else dr++;
+    hg += r.homeGoals; ag += r.awayGoals; hc += r.homeChances; ac += r.awayChances;
+  }
+  return { n, homeWinPct: hw / n, drawPct: dr / n, awayWinPct: aw / n,
+    avgHomeGoals: hg / n, avgAwayGoals: ag / n, avgHomeChances: hc / n, avgAwayChances: ac / n };
+}
+
+/* ============================================================
+   ROSTER / LINEUP HELPERS
+   ============================================================ */
+const round1 = (x) => Math.round(x * 10) / 10;
+
+function pickBestXI(roster, formationKey) {
+  const slots = FORMATIONS[formationKey];
+  const used = new Set();
+  const chosen = {};
+  slots.forEach((s) => {
+    let pick = roster.filter((p) => !used.has(p.id) && p.positions.includes(s.pos)).sort((a, b) => b.rating - a.rating)[0];
+    if (!pick) {
+      const cat = POS_CAT[s.pos];
+      pick = roster.filter((p) => !used.has(p.id) && p.cat === cat).sort((a, b) => b.rating - a.rating)[0];
+    }
+    if (!pick) pick = roster.filter((p) => !used.has(p.id)).sort((a, b) => b.rating - a.rating)[0];
+    if (pick) { chosen[s.id] = pick.id; used.add(pick.id); }
+  });
+  return chosen;
+}
+
+function statsFromPicked(picked) {
+  const avg = (cat) => {
+    const vals = picked.filter((p) => p.cat === cat).map((p) => p.rating);
+    return vals.length ? round1(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  };
+  return { att: avg("ATT"), mid: avg("MID"), def: avg("DEF") };
+}
+
+// unified team-stats resolver: custom XI if set & has >=7 players, else auto best XI (4-3-3)
+function teamStats(club, playersState, customSquads) {
+  const roster = playersState.filter((p) => p.club === club);
+  const cs = customSquads[club];
+  let picked, source, formation, slots;
+  const csFilled = cs ? Object.values(cs.slots).filter(Boolean).length : 0;
+  if (cs && csFilled >= 7) {
+    picked = Object.values(cs.slots).filter(Boolean).map((id) => roster.find((p) => p.id === id)).filter(Boolean);
+    source = `Custom XI (${cs.formation}) · ${picked.length}/11`;
+    formation = cs.formation; slots = cs.slots;
+  } else {
+    formation = "4-3-3";
+    slots = pickBestXI(roster, formation);
+    picked = Object.values(slots).map((id) => roster.find((p) => p.id === id)).filter(Boolean);
+    source = "Auto Best XI (4-3-3)";
+  }
+  const s = statsFromPicked(picked);
+  return { club, ...s, roster: [...roster].sort((a, b) => b.rating - a.rating), picked, source, formation, slots };
+}
+
+/* ============================================================
+   FIXTURES & TABLE
+   ============================================================ */
+function generateFixtures(clubs) {
+  const n = clubs.length;
+  const fixed = clubs[0];
+  let rot = clubs.slice(1);
+  const half = [];
+  for (let r = 0; r < n - 1; r++) {
+    const arr = [fixed, ...rot];
+    const round = [];
+    for (let i = 0; i < n / 2; i++) {
+      const home = arr[i], away = arr[n - 1 - i];
+      round.push(r % 2 === 0 ? { home, away } : { home: away, away: home });
+    }
+    half.push(round);
+    rot.unshift(rot.pop());
+  }
+  const secondHalf = half.map((round) => round.map((m) => ({ home: m.away, away: m.home })));
+  return [...half, ...secondHalf]; // 38 rounds x 10 matches
+}
+
+function initTable(clubs) {
+  const t = {};
+  clubs.forEach((c) => { t[c] = { club: c, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }; });
+  return t;
+}
+function applyResult(table, home, away, hg, ag) {
+  const t = { ...table, [home]: { ...table[home] }, [away]: { ...table[away] } };
+  const h = t[home], a = t[away];
+  h.p++; a.p++; h.gf += hg; h.ga += ag; a.gf += ag; a.ga += hg;
+  if (hg > ag) { h.w++; h.pts += 3; a.l++; }
+  else if (hg < ag) { a.w++; a.pts += 3; h.l++; }
+  else { h.d++; a.d++; h.pts++; a.pts++; }
+  return t;
+}
+function sortedTable(table) {
+  return Object.values(table).sort((x, y) => y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf || x.club.localeCompare(y.club));
+}
+// Merit-based summer budget bonus, driven by final league position.
+// Champion (#1) gets 115M; smooth exponential decay down to a ~17M floor
+// for finishing dead last, echoing how real PL merit/TV money scales.
+function seasonEndBonus(position) {
+  const f = Math.exp(-(position - 1) / 5);
+  return Math.round((15 + 100 * f) * 10) / 10;
+}
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+// Market value computed live from current rating (mirrors the original data-generation
+// formula), so edited ratings immediately produce accurate transfer prices. Capped at
+// £400M so pushing a rating to the extreme (e.g. 99) doesn't produce an absurd number.
+function marketValue(rating, pos, cat) {
+  let v = 0.3 * Math.pow(1.23, rating - 60);
+  if (pos === "GK") v *= 0.65;
+  else if (cat === "ATT") v *= 1.15;
+  else if (cat === "DEF") v *= 0.9;
+  return Math.min(400, Math.round(v * 10) / 10);
+}
+
+/* ============================================================
+   COLORS / FONTS
+   ============================================================ */
+const COLORS = {
+  bg: "#0B3D2E", panel: "#123B2C", panelLight: "#164A36", pitch: "#0E4531",
+  chalk: "#F2F5F0", amber: "#F5C242", clay: "#E2543D", sage: "#8FA99A",
+  line: "rgba(242,245,240,0.14)", pitchLine: "rgba(242,245,240,0.22)",
+};
+const fontImport = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  .fe-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+  .fe-body { font-family: 'Inter', sans-serif; }
+  .fe-mono { font-family: 'JetBrains Mono', monospace; }
+`;
+
+/* ============================================================
+   SMALL SUBCOMPONENTS
+   ============================================================ */
+function StatPill({ label, value }) {
+  return (
+    <div className="flex flex-col items-center px-3 py-2 rounded-xl" style={{ backgroundColor: COLORS.panelLight, minWidth: 64 }}>
+      <span className="fe-mono text-[10px] tracking-widest" style={{ color: COLORS.sage }}>{label}</span>
+      <span className="fe-mono text-xl font-bold" style={{ color: COLORS.chalk }}>{value}</span>
+    </div>
+  );
+}
+function Pill({ active, onClick, children }) {
+  return (
+    <button onClick={onClick} className="fe-mono text-xs px-3 py-2 rounded-full whitespace-nowrap"
+      style={{ backgroundColor: active ? COLORS.amber : "transparent", color: active ? COLORS.bg : COLORS.chalk, border: `1px solid ${active ? COLORS.amber : COLORS.line}` }}>
+      {children}
+    </button>
+  );
+}
+
+/* ============================================================
+   PITCH + LINEUP EDITOR (click-to-select)
+   ============================================================ */
+function LineupEditor({ club, roster, formation, setFormation, slots, setSlots, accent = COLORS.amber }) {
+  const [activeSlot, setActiveSlot] = useState(null);
+  const slotDefs = FORMATIONS[formation];
+  const usedIds = new Set(Object.values(slots).filter(Boolean));
+
+  function changeFormation(f) {
+    const ids = new Set(FORMATIONS[f].map((s) => s.id));
+    const carried = {};
+    Object.entries(slots).forEach(([id, pid]) => { if (ids.has(id)) carried[id] = pid; });
+    setFormation(f);
+    setSlots(carried);
+    setActiveSlot(null);
+  }
+  function assign(slotId, playerId) {
+    setSlots((prev) => {
+      const next = { ...prev };
+      if (playerId == null) delete next[slotId]; else next[slotId] = playerId;
+      return next;
+    });
+  }
+  function eligiblePlayers(slotPos) {
+    const cat = POS_CAT[slotPos];
+    return roster
+      .filter((p) => p.cat === cat || p.positions.includes(slotPos))
+      .sort((a, b) => (b.positions.includes(slotPos) - a.positions.includes(slotPos)) || b.rating - a.rating);
+  }
+  function autoFill() {
+    setSlots(pickBestXI(roster, formation));
+    setActiveSlot(null);
+  }
+
+  const picked = Object.values(slots).filter(Boolean).map((id) => roster.find((p) => p.id === id)).filter(Boolean);
+  const preview = statsFromPicked(picked);
+  const overall = picked.length ? round1(picked.reduce((a, b) => a + b.rating, 0) / picked.length) : 0;
+  const filledCount = picked.length;
+  const activeSlotDef = activeSlot ? slotDefs.find((s) => s.id === activeSlot) : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {Object.keys(FORMATIONS).map((f) => <Pill key={f} active={formation === f} onClick={() => changeFormation(f)}>{f}</Pill>)}
+      </div>
+
+      <div className="rounded-2xl p-3" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        <div className="relative w-full rounded-xl overflow-hidden" style={{ backgroundColor: COLORS.pitch, aspectRatio: "3 / 4" }}>
+          <div className="absolute inset-3 rounded-sm" style={{ border: `1px solid ${COLORS.pitchLine}` }} />
+          <div className="absolute left-3 right-3 top-1/2 border-t" style={{ borderColor: COLORS.pitchLine }} />
+          <div className="absolute rounded-full" style={{ width: "22%", aspectRatio: "1/1", left: "50%", top: "50%", transform: "translate(-50%,-50%)", border: `1px solid ${COLORS.pitchLine}` }} />
+          <div className="absolute left-1/2 top-3 -translate-x-1/2 w-1/2 h-[10%] border" style={{ borderColor: COLORS.pitchLine, borderTop: "none" }} />
+          <div className="absolute left-1/2 bottom-3 -translate-x-1/2 w-1/2 h-[10%] border" style={{ borderColor: COLORS.pitchLine, borderBottom: "none" }} />
+
+          {slotDefs.map((s) => {
+            const player = slots[s.id] ? roster.find((p) => p.id === slots[s.id]) : null;
+            const isActive = activeSlot === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveSlot(isActive ? null : s.id)}
+                className="absolute flex flex-col items-center"
+                style={{ left: `${s.x}%`, top: `${s.y}%`, transform: "translate(-50%,-50%)" }}
+              >
+                <div className="rounded-full flex items-center justify-center fe-mono font-bold text-[11px]"
+                  style={{
+                    width: 36, height: 36,
+                    backgroundColor: isActive ? COLORS.chalk : player ? accent : "rgba(242,245,240,0.12)",
+                    color: isActive ? COLORS.bg : player ? COLORS.bg : COLORS.sage,
+                    border: `2px solid ${isActive ? COLORS.chalk : player ? accent : COLORS.pitchLine}`,
+                    boxShadow: isActive ? `0 0 0 4px rgba(242,245,240,0.25)` : "none",
+                  }}>
+                  {player ? player.rating : s.pos}
+                </div>
+                <span className="fe-mono text-[8px] mt-0.5 whitespace-nowrap" style={{ color: COLORS.sage, maxWidth: 58, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {player ? player.name.split(" ").slice(-1)[0] : s.pos}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {activeSlotDef && (
+        <div className="rounded-2xl p-3" style={{ backgroundColor: COLORS.panelLight, border: `1px solid ${COLORS.line}` }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="fe-mono text-xs tracking-widest" style={{ color: COLORS.amber }}>SELECT {activeSlotDef.pos}</span>
+            <button onClick={() => setActiveSlot(null)}><X size={16} color={COLORS.sage} /></button>
+          </div>
+          {slots[activeSlot] && (
+            <button onClick={() => { assign(activeSlot, null); setActiveSlot(null); }}
+              className="w-full text-left fe-mono text-xs py-2 px-3 rounded-lg mb-1 flex items-center gap-2"
+              style={{ color: COLORS.clay, border: `1px solid ${COLORS.line}` }}>
+              <X size={13} /> Remove from lineup
+            </button>
+          )}
+          <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+            {eligiblePlayers(activeSlotDef.pos).map((p) => {
+              const taken = usedIds.has(p.id) && slots[activeSlot] !== p.id;
+              const isThis = slots[activeSlot] === p.id;
+              return (
+                <button key={p.id} disabled={taken} onClick={() => { assign(activeSlot, p.id); setActiveSlot(null); }}
+                  className="w-full flex justify-between items-center fe-mono text-xs py-2 px-3 rounded-lg"
+                  style={{
+                    backgroundColor: isThis ? COLORS.amber : COLORS.panel,
+                    color: isThis ? COLORS.bg : taken ? COLORS.sage : COLORS.chalk,
+                    opacity: taken ? 0.45 : 1,
+                  }}>
+                  <span className="flex items-center gap-2 truncate pr-2">
+                    {isThis && <Check size={12} />}
+                    <span className="truncate">{p.name}</span>
+                    <span style={{ opacity: 0.6 }}>({p.positions.join("/")})</span>
+                  </span>
+                  <span className="shrink-0">{p.rating}{taken ? " · used" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 justify-center flex-wrap">
+        <StatPill label="ATT" value={preview.att || "–"} />
+        <StatPill label="MID" value={preview.mid || "–"} />
+        <StatPill label="DEF" value={preview.def || "–"} />
+        <StatPill label="OVR" value={overall || "–"} />
+      </div>
+      <div className="text-center fe-mono text-xs" style={{ color: filledCount === 11 ? COLORS.amber : COLORS.sage }}>
+        {filledCount}/11 selected {filledCount < 7 && "— fill at least 7 to use this XI in simulations"}
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={autoFill} className="flex-1 rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2"
+          style={{ backgroundColor: "transparent", color: COLORS.chalk, border: `2px solid ${COLORS.sage}` }}>
+          <Wand2 size={18} /> AUTO-FILL BEST XI
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   QUICK SIM TAB
+   ============================================================ */
+function TeamCard({ side, club, setClub, stats, accent, squadOpen, setSquadOpen }) {
+  return (
+    <div className="rounded-2xl p-4 flex-1 min-w-0" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="fe-mono text-[10px] tracking-widest" style={{ color: accent }}>{side}</span>
+        <div className="w-9 h-9 rounded-full flex items-center justify-center fe-display text-sm" style={{ backgroundColor: accent, color: COLORS.bg }}>
+          {club.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+        </div>
+      </div>
+      <select value={club} onChange={(e) => setClub(e.target.value)}
+        className="w-full fe-display text-xl md:text-2xl bg-transparent outline-none mb-1 cursor-pointer" style={{ color: COLORS.chalk, border: "none" }}>
+        {CLUBS.map((c) => <option key={c} value={c} style={{ color: "#111" }}>{c.toUpperCase()}</option>)}
+      </select>
+      <div className="fe-mono text-[10px] mb-3" style={{ color: stats.source.startsWith("Custom") ? COLORS.amber : COLORS.sage }}>{stats.source}</div>
+      <div className="flex gap-2 mb-3">
+        <StatPill label="ATT" value={stats.att} /><StatPill label="MID" value={stats.mid} /><StatPill label="DEF" value={stats.def} />
+      </div>
+      <button onClick={() => setSquadOpen(!squadOpen)} className="fe-body text-xs flex items-center gap-1 opacity-80 hover:opacity-100" style={{ color: COLORS.sage }}>
+        {squadOpen ? "Hide squad" : "View squad"}{squadOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+      </button>
+      {squadOpen && (
+        <div className="mt-3 max-h-56 overflow-y-auto pr-1 fe-mono text-xs space-y-1">
+          {stats.roster.map((p) => (
+            <div key={p.id} className="flex justify-between py-1" style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+              <span style={{ color: COLORS.chalk }} className="truncate pr-2">{p.name}</span>
+              <span className="flex gap-2 shrink-0"><span style={{ color: COLORS.sage }}>{p.pos}</span><span style={{ color: accent }}>{p.rating}</span></span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickSimTab({ players, customSquads }) {
+  const [homeClub, setHomeClub] = useState("Arsenal");
+  const [awayClub, setAwayClub] = useState("Liverpool");
+  const [homeSquadOpen, setHomeSquadOpen] = useState(false);
+  const [awaySquadOpen, setAwaySquadOpen] = useState(false);
+  const [matchResult, setMatchResult] = useState(null);
+  const [mcResult, setMcResult] = useState(null);
+  const [mcN, setMcN] = useState(2000);
+  const [resultTab, setResultTab] = useState("match");
+
+  const home = useMemo(() => teamStats(homeClub, players, customSquads), [homeClub, players, customSquads]);
+  const away = useMemo(() => teamStats(awayClub, players, customSquads), [awayClub, players, customSquads]);
+  const radarData = [{ stat: "ATT", home: home.att, away: away.att }, { stat: "MID", home: home.mid, away: away.mid }, { stat: "DEF", home: home.def, away: away.def }];
+  const chanceDist = useMemo(() => {
+    const hl = expectedChances(home, away), al = expectedChances(away, home);
+    const rows = [];
+    for (let x = 0; x <= 10; x++) rows.push({ x: String(x), home: Math.round(poissonPmf(x, hl) * 1000) / 10, away: Math.round(poissonPmf(x, al) * 1000) / 10 });
+    return rows;
+  }, [home, away]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-3 items-stretch">
+        <TeamCard side="HOME" club={homeClub} setClub={setHomeClub} stats={home} accent={COLORS.amber} squadOpen={homeSquadOpen} setSquadOpen={setHomeSquadOpen} />
+        <div className="flex md:flex-col items-center justify-center fe-display text-2xl shrink-0" style={{ color: COLORS.sage }}>VS</div>
+        <TeamCard side="AWAY" club={awayClub} setClub={setAwayClub} stats={away} accent={COLORS.clay} squadOpen={awaySquadOpen} setSquadOpen={setAwaySquadOpen} />
+      </div>
+
+      <div className="rounded-2xl p-4" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        <div className="fe-mono text-[10px] tracking-widest mb-1" style={{ color: COLORS.sage }}>SQUAD PROFILE</div>
+        <ResponsiveContainer width="100%" height={220}>
+          <RadarChart data={radarData} outerRadius="75%">
+            <PolarGrid stroke={COLORS.line} />
+            <PolarAngleAxis dataKey="stat" tick={{ fill: COLORS.chalk, fontSize: 12, fontFamily: "JetBrains Mono" }} />
+            <PolarRadiusAxis angle={30} domain={[50, 95]} tick={{ fill: COLORS.sage, fontSize: 9 }} />
+            <Radar name={homeClub} dataKey="home" stroke={COLORS.amber} fill={COLORS.amber} fillOpacity={0.35} />
+            <Radar name={awayClub} dataKey="away" stroke={COLORS.clay} fill={COLORS.clay} fillOpacity={0.3} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="flex gap-3">
+        <button onClick={() => { setMatchResult(simulateMatch(home, away)); setResultTab("match"); }}
+          className="flex-1 rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+          <Play size={18} /> SIMULATE MATCH
+        </button>
+        <button onClick={() => { setMcResult(simulateMany(home, away, mcN)); setResultTab("mc"); }}
+          className="flex-1 rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: "transparent", color: COLORS.chalk, border: `2px solid ${COLORS.sage}` }}>
+          <Dices size={18} /> RUN {mcN.toLocaleString()}×
+        </button>
+      </div>
+      <div className="flex gap-2 justify-center -mt-3">
+        {[500, 2000, 10000].map((n) => <Pill key={n} active={mcN === n} onClick={() => setMcN(n)}>{n.toLocaleString()}</Pill>)}
+      </div>
+
+      {resultTab === "match" && matchResult && (
+        <div className="rounded-2xl p-5" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+          <div className="fe-mono text-[10px] tracking-widest mb-2" style={{ color: COLORS.sage }}>FULL TIME</div>
+          <div className="flex items-center justify-center gap-6 mb-4">
+            <span className="fe-display text-lg text-right w-28 truncate" style={{ color: COLORS.amber }}>{homeClub}</span>
+            <span className="fe-display text-5xl" style={{ color: COLORS.chalk }}>{matchResult.homeGoals} – {matchResult.awayGoals}</span>
+            <span className="fe-display text-lg text-left w-28 truncate" style={{ color: COLORS.clay }}>{awayClub}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4 fe-mono text-sm">
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">CHANCES</div><div style={{ color: COLORS.chalk }}>{matchResult.homeChances}</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">CHANCES</div><div style={{ color: COLORS.chalk }}>{matchResult.awayChances}</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">CONVERSION</div><div style={{ color: COLORS.chalk }}>{(matchResult.homeConv * 100).toFixed(1)}%</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">CONVERSION</div><div style={{ color: COLORS.chalk }}>{(matchResult.awayConv * 100).toFixed(1)}%</div></div>
+          </div>
+        </div>
+      )}
+      {resultTab === "mc" && mcResult && (
+        <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+          <div className="fe-mono text-[10px] tracking-widest" style={{ color: COLORS.sage }}>{mcResult.n.toLocaleString()} SIMULATIONS</div>
+          <div>
+            <div className="w-full h-6 rounded-full overflow-hidden flex fe-mono text-[10px]" style={{ backgroundColor: COLORS.panelLight }}>
+              <div style={{ width: `${mcResult.homeWinPct * 100}%`, backgroundColor: COLORS.amber }} className="flex items-center justify-center">{mcResult.homeWinPct > 0.08 && <span style={{ color: COLORS.bg }}>{(mcResult.homeWinPct * 100).toFixed(0)}%</span>}</div>
+              <div style={{ width: `${mcResult.drawPct * 100}%`, backgroundColor: COLORS.sage }} className="flex items-center justify-center">{mcResult.drawPct > 0.08 && <span style={{ color: COLORS.bg }}>{(mcResult.drawPct * 100).toFixed(0)}%</span>}</div>
+              <div style={{ width: `${mcResult.awayWinPct * 100}%`, backgroundColor: COLORS.clay }} className="flex items-center justify-center">{mcResult.awayWinPct > 0.08 && <span style={{ color: COLORS.bg }}>{(mcResult.awayWinPct * 100).toFixed(0)}%</span>}</div>
+            </div>
+            <div className="flex justify-between fe-mono text-[10px] mt-1" style={{ color: COLORS.sage }}><span>{homeClub} WIN</span><span>DRAW</span><span>{awayClub} WIN</span></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 fe-mono text-sm">
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">AVG GOALS</div><div style={{ color: COLORS.amber }} className="text-xl">{mcResult.avgHomeGoals.toFixed(2)}</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">AVG GOALS</div><div style={{ color: COLORS.clay }} className="text-xl">{mcResult.avgAwayGoals.toFixed(2)}</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">AVG CHANCES</div><div style={{ color: COLORS.chalk }}>{mcResult.avgHomeChances.toFixed(2)}</div></div>
+            <div className="text-center"><div style={{ color: COLORS.sage }} className="text-[10px] tracking-widest mb-1">AVG CHANCES</div><div style={{ color: COLORS.chalk }}>{mcResult.avgAwayChances.toFixed(2)}</div></div>
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl p-4" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        <div className="fe-mono text-[10px] tracking-widest mb-1" style={{ color: COLORS.sage }}>EXPECTED CHANCE DISTRIBUTION (POISSON)</div>
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={chanceDist} barGap={2}>
+            <XAxis dataKey="x" tick={{ fill: COLORS.sage, fontSize: 10, fontFamily: "JetBrains Mono" }} axisLine={{ stroke: COLORS.line }} tickLine={false} />
+            <YAxis hide />
+            <Tooltip contentStyle={{ backgroundColor: COLORS.bg, border: `1px solid ${COLORS.line}`, borderRadius: 8 }} labelStyle={{ color: COLORS.chalk, fontFamily: "JetBrains Mono", fontSize: 11 }} itemStyle={{ fontFamily: "JetBrains Mono", fontSize: 11 }} formatter={(v) => `${v}%`} />
+            <Bar dataKey="home" fill={COLORS.amber} radius={[3, 3, 0, 0]} />
+            <Bar dataKey="away" fill={COLORS.clay} radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="flex gap-4 fe-mono text-[10px] mt-1" style={{ color: COLORS.sage }}>
+          <span style={{ color: COLORS.amber }}>■ {homeClub}</span><span style={{ color: COLORS.clay }}>■ {awayClub}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   SQUAD BUILDER TAB (generic, any club)
+   ============================================================ */
+function SquadBuilderTab({ players, customSquads, setCustomSquads }) {
+  const [club, setClub] = useState(CLUBS[0]);
+  const [formation, setFormation] = useState("4-4-2");
+  const [slots, setSlots] = useState({});
+  const [status, setStatus] = useState("");
+
+  const roster = useMemo(() => players.filter((p) => p.club === club).sort((a, b) => b.rating - a.rating), [players, club]);
+
+  useEffect(() => {
+    const saved = customSquads[club];
+    if (saved) { setFormation(saved.formation); setSlots(saved.slots); }
+    else { setFormation("4-4-2"); setSlots({}); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [club]);
+
+  function save() {
+    setCustomSquads((prev) => ({ ...prev, [club]: { formation, slots } }));
+    setStatus("Saved ✓");
+    setTimeout(() => setStatus(""), 1800);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl p-4" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        <div className="fe-mono text-[10px] tracking-widest mb-2" style={{ color: COLORS.sage }}>BUILDING FOR</div>
+        <select value={club} onChange={(e) => setClub(e.target.value)} className="w-full fe-display text-2xl bg-transparent outline-none" style={{ color: COLORS.chalk }}>
+          {CLUBS.map((c) => <option key={c} value={c} style={{ color: "#111" }}>{c.toUpperCase()}</option>)}
+        </select>
+      </div>
+      <LineupEditor club={club} roster={roster} formation={formation} setFormation={setFormation} slots={slots} setSlots={setSlots} />
+      <div className="flex gap-3 pb-2">
+        <button onClick={save} className="flex-1 rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+          <Save size={18} /> SAVE SQUAD
+        </button>
+        <button onClick={() => setSlots({})} className="rounded-xl py-3 px-4" style={{ backgroundColor: "transparent", color: COLORS.chalk, border: `2px solid ${COLORS.sage}` }}>
+          <RotateCcw size={18} />
+        </button>
+      </div>
+      {status && <div className="text-center fe-mono text-xs" style={{ color: COLORS.amber }}>{status}</div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   CAREER MODE
+   ============================================================ */
+function ClubPicker({ players, onPick }) {
+  const clubAvg = (club) => {
+    const r = players.filter((p) => p.club === club).map((p) => p.rating);
+    return r.reduce((a, b) => a + b, 0) / r.length;
+  };
+  const budgetFor = (avg) => Math.max(10, Math.round(10 + (avg - 70) * 8));
+  const rows = CLUBS.map((c) => ({ club: c, avg: round1(clubAvg(c)), budget: budgetFor(clubAvg(c)) })).sort((a, b) => b.avg - a.avg);
+
+  return (
+    <div className="space-y-3">
+      <div className="fe-mono text-xs" style={{ color: COLORS.sage }}>Pick a club to manage. Your goal: win the Premier League. Multiple seasons, transfer windows, and a real budget.</div>
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <button key={r.club} onClick={() => onPick(r.club)}
+            className="w-full flex items-center justify-between rounded-xl px-4 py-3"
+            style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center fe-display text-sm" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+                {r.club.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+              </div>
+              <span className="fe-display text-lg" style={{ color: COLORS.chalk }}>{r.club.toUpperCase()}</span>
+            </div>
+            <div className="text-right fe-mono text-xs">
+              <div style={{ color: COLORS.sage }}>SQUAD {r.avg}</div>
+              <div style={{ color: COLORS.amber }}>£{r.budget}M</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LeagueTable({ table, myClub }) {
+  const rows = sortedTable(table);
+  const th = "text-right px-1.5 py-2 font-normal";
+  const td = "text-right px-1.5 py-1.5 fe-mono";
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+      <table className="w-full table-fixed border-collapse fe-body text-[12px]">
+        <colgroup>
+          <col style={{ width: 22 }} /><col /><col style={{ width: 26 }} /><col style={{ width: 26 }} />
+          <col style={{ width: 26 }} /><col style={{ width: 26 }} /><col style={{ width: 34 }} /><col style={{ width: 34 }} />
+        </colgroup>
+        <thead>
+          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, color: COLORS.sage }}>
+            <th className="text-left px-1.5 py-2 font-normal">#</th>
+            <th className="text-left px-1.5 py-2 font-normal">Club</th>
+            <th className={th}>P</th><th className={th}>W</th><th className={th}>D</th><th className={th}>L</th>
+            <th className={th}>GD</th><th className={th}>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const gd = r.gf - r.ga;
+            const mine = r.club === myClub;
+            return (
+              <tr key={r.club} style={{ backgroundColor: mine ? COLORS.panelLight : "transparent", borderBottom: `1px solid ${COLORS.line}` }}>
+                <td className="text-left px-1.5 py-1.5 fe-mono" style={{ color: COLORS.sage }}>{i + 1}</td>
+                <td className="text-left px-1.5 py-1.5 truncate" style={{ color: mine ? COLORS.amber : COLORS.chalk, fontWeight: mine ? 600 : 400 }}>{r.club}</td>
+                <td className={td} style={{ color: COLORS.chalk }}>{r.p}</td>
+                <td className={td} style={{ color: COLORS.chalk }}>{r.w}</td>
+                <td className={td} style={{ color: COLORS.chalk }}>{r.d}</td>
+                <td className={td} style={{ color: COLORS.chalk }}>{r.l}</td>
+                <td className={td} style={{ color: COLORS.chalk }}>{gd > 0 ? `+${gd}` : gd}</td>
+                <td className={td + " font-bold"} style={{ color: COLORS.chalk }}>{r.pts}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MatchHistory({ history, myClub }) {
+  const [onlyMine, setOnlyMine] = useState(true);
+  const rows = [...history].reverse().filter((m) => !onlyMine || m.home === myClub || m.away === myClub);
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Pill active={onlyMine} onClick={() => setOnlyMine(true)}>MY CLUB</Pill>
+        <Pill active={!onlyMine} onClick={() => setOnlyMine(false)}>ALL MATCHES</Pill>
+      </div>
+      <div className="rounded-2xl overflow-hidden max-h-[30rem] overflow-y-auto" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        {rows.length === 0 && <div className="p-4 fe-mono text-xs text-center" style={{ color: COLORS.sage }}>No matches yet.</div>}
+        {rows.map((m, i) => (
+          <div key={i} className="flex items-center justify-between px-4 py-2 fe-mono text-xs" style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+            <span style={{ color: COLORS.sage }}>S{m.season} · MW{m.mw}</span>
+            <span className="flex-1 text-right pr-2 truncate" style={{ color: m.home === myClub ? COLORS.amber : COLORS.chalk }}>{m.home}</span>
+            <span className="fe-display text-sm px-2" style={{ color: COLORS.chalk }}>{m.hg}–{m.ag}</span>
+            <span className="flex-1 pl-2 truncate" style={{ color: m.away === myClub ? COLORS.amber : COLORS.chalk }}>{m.away}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TransferMarket({ players, setPlayers, career, setCareer, customSquads, setCustomSquads }) {
+  const [mode, setMode] = useState("buy");
+  const [query, setQuery] = useState("");
+  const [posFilter, setPosFilter] = useState("ALL");
+
+  const buyList = useMemo(() => {
+    return players
+      .filter((p) => p.club !== career.club && p.club !== "Free Agent")
+      .filter((p) => posFilter === "ALL" || p.cat === posFilter)
+      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 60);
+  }, [players, career.club, posFilter, query]);
+
+  const sellList = useMemo(() => {
+    return players
+      .filter((p) => p.club === career.club)
+      .filter((p) => posFilter === "ALL" || p.cat === posFilter)
+      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+      .sort((a, b) => b.rating - a.rating);
+  }, [players, career.club, posFilter, query]);
+
+  function buy(p) {
+    const price = marketValue(p.rating, p.pos, p.cat);
+    if (career.budget < price) return;
+    setPlayers((prev) => prev.map((x) => (x.id === p.id ? { ...x, club: career.club } : x)));
+    setCareer((prev) => ({ ...prev, budget: round1(prev.budget - price) }));
+  }
+  function sell(p) {
+    const mySquadSize = players.filter((x) => x.club === career.club).length;
+    if (mySquadSize <= 11) return; // safeguard: keep enough to field a team
+    const sellPrice = round1(marketValue(p.rating, p.pos, p.cat) * 0.85);
+    setPlayers((prev) => prev.map((x) => (x.id === p.id ? { ...x, club: "Free Agent" } : x)));
+    setCareer((prev) => ({ ...prev, budget: round1(prev.budget + sellPrice) }));
+    // clean up any lineup slot referencing the sold player
+    setCustomSquads((prev) => {
+      const cs = prev[career.club];
+      if (!cs) return prev;
+      const slots = { ...cs.slots };
+      let changed = false;
+      Object.entries(slots).forEach(([slotId, pid]) => { if (pid === p.id) { delete slots[slotId]; changed = true; } });
+      if (!changed) return prev;
+      return { ...prev, [career.club]: { ...cs, slots } };
+    });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Pill active={mode === "buy"} onClick={() => setMode("buy")}>BUY</Pill>
+        <Pill active={mode === "sell"} onClick={() => setMode("sell")}>SELL</Pill>
+      </div>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search player…"
+        className="w-full fe-mono text-sm rounded-lg px-3 py-2 outline-none" style={{ backgroundColor: COLORS.panelLight, color: COLORS.chalk, border: `1px solid ${COLORS.line}` }} />
+      <div className="flex gap-2 flex-wrap">
+        {["ALL", "DEF", "MID", "ATT"].map((c) => <Pill key={c} active={posFilter === c} onClick={() => setPosFilter(c)}>{c}</Pill>)}
+      </div>
+      <div className="rounded-2xl overflow-hidden max-h-[28rem] overflow-y-auto" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        {(mode === "buy" ? buyList : sellList).map((p) => (
+          <div key={p.id} className="flex items-center justify-between px-4 py-2.5 fe-mono text-xs" style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+            <div className="min-w-0 pr-2">
+              <div className="truncate" style={{ color: COLORS.chalk }}>{p.name} <span style={{ color: COLORS.sage }}>{p.pos}</span></div>
+              <div style={{ color: COLORS.sage }}>{mode === "buy" ? p.club : "Rating " + p.rating}</div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span style={{ color: COLORS.amber }}>£{mode === "buy" ? marketValue(p.rating, p.pos, p.cat) : round1(marketValue(p.rating, p.pos, p.cat) * 0.85)}M</span>
+              {mode === "buy" ? (
+                <button onClick={() => buy(p)} disabled={career.budget < marketValue(p.rating, p.pos, p.cat)}
+                  className="rounded-full px-3 py-1.5 flex items-center gap-1"
+                  style={{ backgroundColor: career.budget < marketValue(p.rating, p.pos, p.cat) ? "transparent" : COLORS.amber, color: career.budget < marketValue(p.rating, p.pos, p.cat) ? COLORS.sage : COLORS.bg, border: `1px solid ${career.budget < marketValue(p.rating, p.pos, p.cat) ? COLORS.line : COLORS.amber}` }}>
+                  <ShoppingCart size={12} /> Buy
+                </button>
+              ) : (
+                <button onClick={() => sell(p)} className="rounded-full px-3 py-1.5 flex items-center gap-1" style={{ backgroundColor: "transparent", color: COLORS.clay, border: `1px solid ${COLORS.clay}` }}>
+                  <X size={12} /> Sell
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {(mode === "buy" ? buyList : sellList).length === 0 && <div className="p-4 fe-mono text-xs text-center" style={{ color: COLORS.sage }}>No players match.</div>}
+      </div>
+    </div>
+  );
+}
+
+function CareerLineupTab({ players, career, customSquads, setCustomSquads }) {
+  const [formation, setFormation] = useState("4-4-2");
+  const [slots, setSlots] = useState({});
+  const [status, setStatus] = useState("");
+  const roster = useMemo(() => players.filter((p) => p.club === career.club).sort((a, b) => b.rating - a.rating), [players, career.club]);
+
+  useEffect(() => {
+    const saved = customSquads[career.club];
+    if (saved) { setFormation(saved.formation); setSlots(saved.slots); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function save() {
+    setCustomSquads((prev) => ({ ...prev, [career.club]: { formation, slots } }));
+    setStatus("Tactics saved ✓");
+    setTimeout(() => setStatus(""), 1800);
+  }
+
+  return (
+    <div className="space-y-4">
+      <LineupEditor club={career.club} roster={roster} formation={formation} setFormation={setFormation} slots={slots} setSlots={setSlots} />
+      <button onClick={save} className="w-full rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+        <Save size={18} /> SAVE TACTICS
+      </button>
+      {status && <div className="text-center fe-mono text-xs" style={{ color: COLORS.amber }}>{status}</div>}
+    </div>
+  );
+}
+
+function CareerPlayTab({ players, career, setCareer, customSquads, setHistory }) {
+  const [lastResults, setLastResults] = useState(null);
+  const mw = career.matchweek; // 0..38 completed
+  const nextFixtures = career.fixtures[mw] || [];
+  const isSeasonOver = mw >= 38;
+
+  function playMatchweek() {
+    if (career.phase !== "season") return;
+    const results = nextFixtures.map((f) => {
+      const h = teamStats(f.home, players, customSquads);
+      const a = teamStats(f.away, players, customSquads);
+      const r = simulateMatch(h, a);
+      return { season: career.season, mw: mw + 1, home: f.home, away: f.away, hg: r.homeGoals, ag: r.awayGoals };
+    });
+    let table = career.table;
+    results.forEach((r) => { table = applyResult(table, r.home, r.away, r.hg, r.ag); });
+    const newMw = mw + 1;
+    const finishedSeason = newMw >= 38;
+    setCareer((prev) => ({
+      ...prev,
+      table,
+      matchweek: newMw,
+      phase: finishedSeason ? "finished" : newMw === 19 ? "window" : "season",
+      windowType: finishedSeason ? "summer" : newMw === 19 ? "january" : prev.windowType,
+    }));
+    setHistory((prev) => [...prev, ...results]);
+    setLastResults(results);
+  }
+
+  const myMatch = nextFixtures.find((f) => f.home === career.club || f.away === career.club);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        <StatPill label="SEASON" value={career.season} />
+        <StatPill label="MATCHWEEK" value={`${mw}/38`} />
+        <StatPill label="BUDGET" value={`£${career.budget}M`} />
+      </div>
+
+      {career.phase === "season" && !isSeasonOver && (
+        <>
+          {myMatch && (
+            <div className="rounded-2xl p-4 text-center" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+              <div className="fe-mono text-[10px] tracking-widest mb-2" style={{ color: COLORS.sage }}>MATCHWEEK {mw + 1} — YOUR FIXTURE</div>
+              <div className="fe-display text-2xl" style={{ color: COLORS.chalk }}>
+                <span style={{ color: myMatch.home === career.club ? COLORS.amber : COLORS.chalk }}>{myMatch.home}</span>
+                <span className="mx-2" style={{ color: COLORS.sage }}>vs</span>
+                <span style={{ color: myMatch.away === career.club ? COLORS.amber : COLORS.chalk }}>{myMatch.away}</span>
+              </div>
+            </div>
+          )}
+          <button onClick={playMatchweek} className="w-full rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+            <Play size={18} /> SIMULATE MATCHWEEK {mw + 1}
+          </button>
+        </>
+      )}
+
+      {career.phase === "window" && !(career.windowType === "summer" && mw >= 38) && (
+        <div className="rounded-2xl p-4 text-center space-y-2" style={{ backgroundColor: COLORS.panelLight, border: `1px solid ${COLORS.amber}` }}>
+          <div className="fe-display text-xl" style={{ color: COLORS.amber }}>
+            {career.windowType === "january" ? "JANUARY TRANSFER WINDOW" : "PRESEASON TRANSFER WINDOW"}
+          </div>
+          <div className="fe-mono text-xs" style={{ color: COLORS.sage }}>Buy or sell in the Transfers tab, set your tactics in Lineup, then continue.</div>
+          <button onClick={() => setCareer((prev) => ({ ...prev, phase: "season" }))}
+            className="w-full rounded-xl py-3 fe-display text-lg mt-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+            {career.windowType === "preseason" ? "KICK OFF SEASON" : "CONTINUE SEASON"}
+          </button>
+        </div>
+      )}
+
+      {career.phase === "window" && career.windowType === "summer" && mw >= 38 && (
+        <div className="rounded-2xl p-4 text-center space-y-1" style={{ backgroundColor: COLORS.panelLight, border: `1px solid ${COLORS.amber}` }}>
+          <div className="fe-display text-xl" style={{ color: COLORS.amber }}>SUMMER TRANSFER WINDOW</div>
+          {career.lastBonus && (
+            <div className="fe-mono text-xs" style={{ color: COLORS.chalk }}>
+              Finished {ordinal(career.lastBonus.position)} — merit bonus: <span style={{ color: COLORS.amber }}>+£{career.lastBonus.bonus}M</span>
+            </div>
+          )}
+          <div className="fe-mono text-xs" style={{ color: COLORS.sage }}>
+            Buy or sell in Transfers, set tactics in Lineup, then use "START SEASON {career.season + 1}" above when ready.
+          </div>
+        </div>
+      )}
+
+      {career.phase === "finished" && (
+        <div className="rounded-2xl p-5 text-center space-y-3" style={{ backgroundColor: COLORS.panelLight, border: `1px solid ${COLORS.amber}` }}>
+          {sortedTable(career.table)[0].club === career.club ? (
+            <>
+              <Trophy size={40} color={COLORS.amber} className="mx-auto" />
+              <div className="fe-display text-2xl" style={{ color: COLORS.amber }}>CHAMPIONS!</div>
+              <div className="fe-mono text-xs" style={{ color: COLORS.chalk }}>{career.club} won the Premier League — Season {career.season}</div>
+            </>
+          ) : (
+            <>
+              <div className="fe-display text-2xl" style={{ color: COLORS.chalk }}>SEASON {career.season} COMPLETE</div>
+              <div className="fe-mono text-xs" style={{ color: COLORS.sage }}>
+                {career.club} finished {ordinal(sortedTable(career.table).findIndex((r) => r.club === career.club) + 1)}
+              </div>
+            </>
+          )}
+          <button onClick={() => {
+              const position = sortedTable(career.table).findIndex((r) => r.club === career.club) + 1;
+              const bonus = seasonEndBonus(position);
+              setCareer((prev) => ({ ...prev, phase: "window", windowType: "summer", budget: round1(prev.budget + bonus), lastBonus: { position, bonus } }));
+            }}
+            className="w-full rounded-xl py-3 fe-display text-lg" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+            ENTER SUMMER WINDOW
+          </button>
+        </div>
+      )}
+
+      {lastResults && (
+        <div className="rounded-2xl p-4" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+          <div className="fe-mono text-[10px] tracking-widest mb-2" style={{ color: COLORS.sage }}>MATCHWEEK {lastResults[0].mw} RESULTS</div>
+          <div className="space-y-1">
+            {lastResults.map((r, i) => (
+              <div key={i} className="flex items-center justify-between fe-mono text-xs py-1">
+                <span className="truncate flex-1 text-right pr-2" style={{ color: r.home === career.club ? COLORS.amber : COLORS.chalk }}>{r.home}</span>
+                <span style={{ color: COLORS.chalk }} className="px-1">{r.hg}–{r.ag}</span>
+                <span className="truncate flex-1 pl-2" style={{ color: r.away === career.club ? COLORS.amber : COLORS.chalk }}>{r.away}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CareerTab({ players, setPlayers, career, setCareer, customSquads, setCustomSquads, history, setHistory, startCareer }) {
+  const [sub, setSub] = useState("play");
+
+  if (!career) {
+    return <ClubPicker players={players} onPick={startCareer} />;
+  }
+
+  function startNewSeason() {
+    const fixtures = generateFixtures(CLUBS);
+    setCareer((prev) => ({
+      ...prev,
+      season: prev.season + 1,
+      matchweek: 0,
+      phase: "season",
+      windowType: "preseason",
+      table: initTable(CLUBS),
+      fixtures,
+      lastBonus: null,
+    }));
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="fe-display text-2xl" style={{ color: COLORS.chalk }}>{career.club.toUpperCase()}</span>
+        <span className="fe-mono text-xs" style={{ color: COLORS.amber }}>£{career.budget}M</span>
+      </div>
+      <div className="flex gap-2 flex-wrap">
+        <Pill active={sub === "play"} onClick={() => setSub("play")}><Play size={11} className="inline mr-1" />PLAY</Pill>
+        <Pill active={sub === "table"} onClick={() => setSub("table")}><Table2 size={11} className="inline mr-1" />TABLE</Pill>
+        <Pill active={sub === "history"} onClick={() => setSub("history")}><History size={11} className="inline mr-1" />HISTORY</Pill>
+        <Pill active={sub === "transfers"} onClick={() => setSub("transfers")}><Wallet size={11} className="inline mr-1" />TRANSFERS</Pill>
+        <Pill active={sub === "lineup"} onClick={() => setSub("lineup")}><Users size={11} className="inline mr-1" />LINEUP</Pill>
+      </div>
+
+      {sub === "play" && career.phase === "window" && career.windowType === "summer" && career.matchweek >= 38 && (
+        <button onClick={startNewSeason} className="w-full rounded-xl py-3 fe-display text-lg flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.amber, color: COLORS.bg }}>
+          <Trophy size={18} /> START SEASON {career.season + 1}
+        </button>
+      )}
+
+      {sub === "play" && <CareerPlayTab players={players} career={career} setCareer={setCareer} customSquads={customSquads} setHistory={setHistory} />}
+      {sub === "table" && <LeagueTable table={career.table} myClub={career.club} />}
+      {sub === "history" && <MatchHistory history={history} myClub={career.club} />}
+      {sub === "transfers" && (
+        career.phase === "window"
+          ? <TransferMarket players={players} setPlayers={setPlayers} career={career} setCareer={setCareer} customSquads={customSquads} setCustomSquads={setCustomSquads} />
+          : <div className="rounded-2xl p-4 text-center fe-mono text-xs" style={{ backgroundColor: COLORS.panel, border: `1px solid ${COLORS.line}`, color: COLORS.sage }}>
+              Transfer window closed. Next window opens after Matchweek {career.matchweek < 19 ? 19 : 38}.
+            </div>
+      )}
+      {sub === "lineup" && <CareerLineupTab players={players} career={career} customSquads={customSquads} setCustomSquads={setCustomSquads} />}
+    </div>
+  );
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+function MatchEngine() {
+  const [tab, setTab] = useState("career");
+  const [players, setPlayers] = useState(BASE_PLAYERS);
+  const [customSquads, setCustomSquads] = useState({});
+  const [career, setCareer] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const value = localStorage.getItem("careerSave");
+        const res = value ? { value } : null;
+        if (res && res.value) {
+          const saved = JSON.parse(res.value);
+          if (saved.players) setPlayers(saved.players);
+          if (saved.customSquads) setCustomSquads(saved.customSquads);
+          if (saved.career) setCareer(saved.career);
+          if (saved.history) setHistory(saved.history);
+        }
+      } catch (e) { /* no save yet */ }
+      setLoaded(true);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    (async () => {
+      try { localStorage.setItem("careerSave", JSON.stringify({ players, customSquads, career, history })); }
+      catch (e) { /* ignore save failure */ }
+    })();
+  }, [players, customSquads, career, history, loaded]);
+
+  function startCareer(club) {
+    const avg = players.filter((p) => p.club === club).map((p) => p.rating).reduce((a, b) => a + b, 0) / players.filter((p) => p.club === club).length;
+    const budget = Math.max(10, Math.round(10 + (avg - 70) * 8));
+    setCareer({
+      club, season: 1, matchweek: 0, phase: "window", windowType: "preseason",
+      budget, table: initTable(CLUBS), fixtures: generateFixtures(CLUBS),
+    });
+    setHistory([]);
+  }
+
+  if (!loaded) return <div style={{ backgroundColor: COLORS.bg, minHeight: "100vh" }} />;
+
+  return (
+    <div className="fe-body min-h-screen w-full" style={{ backgroundColor: COLORS.bg }}>
+      <style>{fontImport}</style>
+      <div className="px-5 pt-8 pb-4 relative overflow-hidden" style={{ background: `radial-gradient(circle at 50% 120%, ${COLORS.panelLight} 0%, ${COLORS.bg} 60%)`, borderBottom: `1px solid ${COLORS.line}` }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="fe-mono text-xs tracking-[0.3em]" style={{ color: COLORS.amber }}>PREMIER LEAGUE · 2026/27</div>
+          <h1 className="fe-display text-4xl md:text-5xl" style={{ color: COLORS.chalk }}>MATCH ENGINE</h1>
+          <p className="fe-body text-sm mt-1" style={{ color: COLORS.sage }}>Manage a club through a career, or test any matchup head to head.</p>
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <Pill active={tab === "career"} onClick={() => setTab("career")}><Trophy size={12} className="inline mr-1" />CAREER</Pill>
+            <Pill active={tab === "sim"} onClick={() => setTab("sim")}><Swords size={12} className="inline mr-1" />QUICK SIM</Pill>
+            <Pill active={tab === "builder"} onClick={() => setTab("builder")}><Users size={12} className="inline mr-1" />SQUAD BUILDER</Pill>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-5 py-6">
+        {tab === "career" && (
+          <CareerTab players={players} setPlayers={setPlayers} career={career} setCareer={setCareer}
+            customSquads={customSquads} setCustomSquads={setCustomSquads} history={history} setHistory={setHistory} startCareer={startCareer} />
+        )}
+        {tab === "sim" && <QuickSimTab players={players} customSquads={customSquads} />}
+        {tab === "builder" && <SquadBuilderTab players={players} customSquads={customSquads} setCustomSquads={setCustomSquads} />}
+
+      </div>
+    </div>
+  );
+}
+
+
+    createRoot(document.getElementById("root")).render(<MatchEngine />);
+  </script>
+</body>
+</html>
